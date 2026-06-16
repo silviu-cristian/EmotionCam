@@ -38,6 +38,7 @@ from app.core.expression_profile import ExpressionProfile
 from app.core.email_summary import due_summary_date, open_mail_client, send_smtp, store_password
 from app.core.statistics import read_expression_history, summarize_day
 from app.core.user_profile import UserProfile
+from app.core.local_ai_client import LocalOllamaExpressionClient
 from app.core.privacy import PRIVACY_NOTICE
 from app.ui.camera_view import CameraView
 from app.ui.calibration_dialog import CalibrationDialog
@@ -274,10 +275,12 @@ class MainWindow(QMainWindow):
         self.profile_label.setText(f"Personalized profile: {'active' if active else 'inactive'}")
         mode = result.get("detection_mode", self.config.data["expression_detection_mode"])
         ai_enabled = bool(result.get("external_ai_enabled", self.config.data["external_ai_enabled"]))
+        ai_provider = result.get("ai_provider", self.config.data.get("external_ai_provider", "openai"))
         ai_status = result.get("ai_status", "Off")
         if ai_enabled and mode not in {"external_ai", "hybrid_ai"}:
             ai_status = "Enabled in settings, inactive in current detection mode"
-        self.ai_status_label.setText(f"External AI: {'enabled' if ai_enabled else 'off'} | {ai_status}")
+        provider_text = "Local Ollama" if ai_provider == "ollama" else "OpenAI"
+        self.ai_status_label.setText(f"AI provider: {provider_text} | {'enabled' if ai_enabled else 'off'} | {ai_status}")
         ai_result = result.get("ai_result_label", "")
         ai_confidence = float(result.get("ai_result_confidence", 0.0) or 0.0)
         ai_time = result.get("last_ai_result_time", "")
@@ -422,6 +425,9 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Email Summary", f"Could not send the test summary: {exc}")
 
     def _handle_ai_key_from_settings(self, values: dict) -> None:
+        if values.get("external_ai_provider") != "openai":
+            self.session_ai_api_key = ""
+            return
         api_key = normalize_api_key(values.get("external_ai_api_key", ""))
         if not api_key:
             return
@@ -446,24 +452,40 @@ class MainWindow(QMainWindow):
         )
 
     def _test_ai_connection(self, values: dict) -> None:
-        api_key = normalize_api_key(values.get("external_ai_api_key", "")) or load_api_key()
-        if not api_key:
-            message = "Enter an OpenAI API key or store one securely before testing the connection."
-            self.statusBar().showMessage(message)
-            self.ai_test_finished.emit(False, message)
-            return
+        provider = str(values.get("external_ai_provider", "openai"))
         timeout = float(values.get("external_ai_timeout_seconds", 20.0))
-        self.statusBar().showMessage("Testing OpenAI connection...")
+        if provider == "openai":
+            api_key = normalize_api_key(values.get("external_ai_api_key", "")) or load_api_key()
+            if not api_key:
+                message = "Enter an OpenAI API key or store one securely before testing the connection."
+                self.statusBar().showMessage(message)
+                self.ai_test_finished.emit(False, message)
+                return
+            self.statusBar().showMessage("Testing OpenAI connection...")
+        else:
+            api_key = ""
+            self.statusBar().showMessage("Testing Local Ollama connection...")
 
         def worker() -> None:
             try:
-                client = OpenAIExpressionClient(self.config.data.get("external_ai_model", "gpt-4.1-mini"))
-                client.test_connection(api_key, timeout)
-                message = "OpenAI connection test succeeded."
+                if provider == "ollama":
+                    client = LocalOllamaExpressionClient(
+                        values.get("local_ai_ollama_endpoint", "http://localhost:11434"),
+                        values.get("local_ai_ollama_model", "llava:7b"),
+                    )
+                    client.test_connection(timeout)
+                    message = "Local Ollama connection test succeeded."
+                else:
+                    client = OpenAIExpressionClient(
+                        values.get("external_ai_model") or self.config.data.get("external_ai_model", "gpt-4.1-mini")
+                    )
+                    client.test_connection(api_key, timeout)
+                    message = "OpenAI connection test succeeded."
                 self.ai_status_changed.emit(message)
                 self.ai_test_finished.emit(True, message)
             except Exception as exc:
-                message = f"OpenAI connection test failed: {exc}"
+                name = "Local Ollama" if provider == "ollama" else "OpenAI"
+                message = f"{name} connection test failed: {exc}"
                 self.ai_status_changed.emit(message)
                 self.ai_test_finished.emit(False, message)
 
@@ -556,6 +578,11 @@ class MainWindow(QMainWindow):
 
     def _refresh_ai_header(self) -> None:
         if self.config.data.get("external_ai_enabled") and self.config.data.get("external_ai_consent_accepted"):
+            if self.config.data.get("external_ai_provider") == "ollama":
+                self.privacy_mode_label.setText(
+                    "LOCAL BY DEFAULT  |  LOCAL AI ENABLED BY CONSENT  |  NO IMAGE SAVING"
+                )
+                return
             self.privacy_mode_label.setText(
                 "LOCAL BY DEFAULT  |  EXTERNAL AI ENABLED BY CONSENT  |  NO IMAGE SAVING"
             )
@@ -570,7 +597,7 @@ class MainWindow(QMainWindow):
             "heuristic": "Local only",
             "personalized": "Personalized only",
             "hybrid": "Personalized / Hybrid local",
-            "external_ai": "External AI only",
+            "external_ai": "AI only",
             "hybrid_ai": "Hybrid local + AI",
         }.get(mode, str(mode).replace("_", " ").title())
 

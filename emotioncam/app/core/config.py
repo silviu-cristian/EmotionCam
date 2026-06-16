@@ -11,6 +11,7 @@ from .paths import config_path, profile_path
 
 
 EXPRESSION_DETECTION_MODES = {"heuristic", "personalized", "hybrid", "external_ai", "hybrid_ai"}
+AI_PROVIDERS = {"openai", "ollama"}
 
 
 DEFAULT_CONFIG: dict[str, Any] = {
@@ -56,6 +57,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "external_ai_show_debug_info": False,
     "external_ai_model": "gpt-4.1-mini",
     "external_ai_min_confidence": 0.55,
+    "local_ai_ollama_endpoint": "http://localhost:11434",
+    "local_ai_ollama_model": "llava:7b",
 }
 
 
@@ -124,8 +127,8 @@ class ConfigManager:
         if key == "expression_detection_mode":
             return value if value in EXPRESSION_DETECTION_MODES else None
         if key == "external_ai_provider":
-            return value if value == "openai" else None
-        if key == "external_ai_model":
+            return value if value in AI_PROVIDERS else None
+        if key in {"external_ai_model", "local_ai_ollama_endpoint", "local_ai_ollama_model"}:
             return value.strip() if isinstance(value, str) and value.strip() else None
         if isinstance(default, bool):
             return value if isinstance(value, bool) else None

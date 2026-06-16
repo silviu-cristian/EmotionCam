@@ -77,25 +77,29 @@ def unknown_result(reason: str, source: str = "external_ai", confidence: float =
     )
 
 
-def parse_ai_response_json(text: str, min_confidence: float = 0.55) -> ExpressionResult:
+def parse_ai_response_json(
+    text: str,
+    min_confidence: float = 0.55,
+    source: str = "external_ai",
+) -> ExpressionResult:
     """Validate the model's JSON and convert it to an ExpressionResult."""
     try:
         payload = json.loads(text)
     except (TypeError, json.JSONDecodeError):
-        return unknown_result("invalid_json")
+        return unknown_result("invalid_json", source=source)
     if not isinstance(payload, dict):
-        return unknown_result("invalid_payload")
+        return unknown_result("invalid_payload", source=source)
 
     label = str(payload.get("label", "unknown")).strip().lower().replace(" ", "_")
     group = str(payload.get("group", "neutral")).strip().lower()
     confidence = clamp_confidence(payload.get("confidence", 0.0))
     if label not in AI_SUPPORTED_LABELS:
-        return unknown_result("invalid_label", confidence=confidence)
+        return unknown_result("invalid_label", source=source, confidence=confidence)
     expected_group = group_for_label(label)
     if group not in AI_SUPPORTED_GROUPS or (label not in {"unknown", "no_face"} and group != expected_group):
         group = expected_group
     if confidence < min_confidence:
-        return unknown_result("low_confidence", confidence=confidence)
+        return unknown_result("low_confidence", source=source, confidence=confidence)
 
     probabilities = {label: confidence}
     alternatives = payload.get("alternatives", [])
@@ -111,7 +115,7 @@ def parse_ai_response_json(text: str, min_confidence: float = 0.55) -> Expressio
         group,
         confidence,
         dict(sorted(probabilities.items(), key=lambda item: item[1], reverse=True)[:4]),
-        "external_ai",
+        source,
         {
             "ai_status": "result_received",
             "reason": sanitize_reason(payload.get("reason", "")),
@@ -150,8 +154,8 @@ def crop_frame_for_ai(
     }
 
 
-def encode_frame_data_url(frame: Any, max_side: int = 768, jpeg_quality: int = 82) -> str:
-    """Resize/compress an OpenCV BGR image and return a JPEG data URL."""
+def encode_frame_jpeg_base64(frame: Any, max_side: int = 768, jpeg_quality: int = 82) -> str:
+    """Resize/compress an OpenCV BGR image and return base64 JPEG bytes."""
     import cv2
 
     if frame is None or getattr(frame, "size", 0) == 0:
@@ -164,7 +168,12 @@ def encode_frame_data_url(frame: Any, max_side: int = 768, jpeg_quality: int = 8
     ok, encoded = cv2.imencode(".jpg", prepared, [int(cv2.IMWRITE_JPEG_QUALITY), int(jpeg_quality)])
     if not ok:
         raise ValueError("Could not encode the selected frame for AI analysis.")
-    payload = base64.b64encode(encoded.tobytes()).decode("ascii")
+    return base64.b64encode(encoded.tobytes()).decode("ascii")
+
+
+def encode_frame_data_url(frame: Any, max_side: int = 768, jpeg_quality: int = 82) -> str:
+    """Resize/compress an OpenCV BGR image and return a JPEG data URL."""
+    payload = encode_frame_jpeg_base64(frame, max_side, jpeg_quality)
     return f"data:image/jpeg;base64,{payload}"
 
 

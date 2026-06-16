@@ -39,6 +39,9 @@ def test_existing_config_migrates_new_defaults(tmp_path):
     assert data["external_ai_request_interval_seconds"] == 10.0
     assert data["external_ai_timeout_seconds"] == 20.0
     assert data["external_ai_send_cropped_face_only"] is True
+    assert data["external_ai_provider"] == "openai"
+    assert data["local_ai_ollama_endpoint"] == "http://localhost:11434"
+    assert data["local_ai_ollama_model"] == "llava:7b"
 
 
 def test_api_key_is_not_saved_in_plain_config(tmp_path):
@@ -69,3 +72,21 @@ def test_invalid_theme_falls_back_to_dark(tmp_path):
     path = tmp_path / "config.json"
     path.write_text('{"theme": "invisible"}', encoding="utf-8")
     assert ConfigManager(path).data["theme"] == "dark"
+
+
+def test_local_ai_provider_config_migrates_safely(tmp_path):
+    path = tmp_path / "config.json"
+    path.write_text(
+        json.dumps(
+            {
+                "external_ai_provider": "ollama",
+                "local_ai_ollama_endpoint": "http://localhost:11434",
+                "local_ai_ollama_model": "llava:7b",
+            }
+        ),
+        encoding="utf-8",
+    )
+    data = ConfigManager(path).data
+    assert data["external_ai_provider"] == "ollama"
+    assert data["local_ai_ollama_endpoint"] == "http://localhost:11434"
+    assert data["local_ai_ollama_model"] == "llava:7b"

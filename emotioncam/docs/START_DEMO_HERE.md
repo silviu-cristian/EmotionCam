@@ -8,7 +8,9 @@ This is the fastest guide for presenting EmotionCam.
 2. Select **Help > Start Demo Guide** to reopen this page.
 3. Keep raw calibration image storage off.
 4. Do not type or display a real API key during a public demo.
-5. Use the scripted flow below.
+5. If demonstrating Local Ollama, install Ollama and run `ollama pull llava:7b`
+   before demo day.
+6. Use the scripted flow below.
 
 ## Demo Flow
 
@@ -19,23 +21,26 @@ This is the fastest guide for presenting EmotionCam.
 4. Stop the camera and show the black `Camera stopped` preview.
 5. Open Settings and demonstrate the visible numeric up/down arrows.
 6. Switch to Light theme, save, and optionally switch back to Dark.
-7. Show **Expression Detection Mode and External AI**.
-8. Explain AI is off by default and requires consent plus an OpenAI API key.
-9. Show **Send cropped face only** and **Test Connection** without displaying a
-   real key.
-10. Switch to **Hybrid local + AI** and show the dashboard AI status/fallback
-   behavior if no key is configured.
-11. Disable AI again or return to local/hybrid local mode.
-12. Open calibration.
-13. Select an expression from the dropdown.
-14. Show the local example graphic and match helper.
-15. Click **Start Capture**, then show sample progress and quality.
-16. Use **Re-capture**, **Previous**, and **Next**.
-17. Finish calibration and return to the dashboard.
-18. Open Statistics and show local daily/weekly charts.
-19. Show optional User Profile and disabled-by-default Daily Email Summary.
-20. Run in background and explain tray behavior.
-21. Open logs and close the app.
+7. Show **Expression Detection Mode and AI Analysis**.
+8. Choose **Local Ollama** and explain that it runs on this computer and does
+   not need OpenAI quota.
+9. Show endpoint `http://localhost:11434`, model `llava:7b`, and
+   **Test Connection**.
+10. Optionally switch to **OpenAI** and explain that it requires consent, an API
+   key, quota, and internet access.
+11. Switch to **Hybrid local + AI** and show the dashboard AI status/fallback
+   behavior if no provider is ready.
+12. Disable AI again or return to local/hybrid local mode.
+13. Open calibration.
+14. Select an expression from the dropdown.
+15. Show the local example graphic and match helper.
+16. Click **Start Capture**, then show sample progress and quality.
+17. Use **Re-capture**, **Previous**, and **Next**.
+18. Finish calibration and return to the dashboard.
+19. Open Statistics and show local daily/weekly charts.
+20. Show optional User Profile and disabled-by-default Daily Email Summary.
+21. Run in background and explain tray behavior.
+22. Open logs and close the app.
 
 ## Demo Screens
 
@@ -60,3 +65,6 @@ This is the fastest guide for presenting EmotionCam.
   public-safe version of the demo.
 - Never show a real OpenAI API key. Use the masked placeholder screenshots for
   the AI portion of the demo.
+- If Ollama is not installed, use the Test Connection failure as a clean
+  teaching moment: "The app is ready, but the local AI runtime/model is not
+  installed yet."

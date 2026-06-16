@@ -1,5 +1,5 @@
 #define MyAppName "EmotionCam"
-#define MyAppVersion "1.1.3"
+#define MyAppVersion "1.2.0"
 #define MyAppExeName "EmotionCam.exe"
 
 [Setup]
@@ -10,7 +10,7 @@ DefaultDirName={localappdata}\Programs\EmotionCam
 DefaultGroupName=EmotionCam
 PrivilegesRequired=lowest
 OutputDir=..\release
-OutputBaseFilename=EmotionCam_Setup_v1.1.3_AI
+OutputBaseFilename=EmotionCam_Setup_v1.2.0_AI
 SetupIconFile=..\app\assets\icon.ico
 Compression=lzma2
 SolidCompression=yes

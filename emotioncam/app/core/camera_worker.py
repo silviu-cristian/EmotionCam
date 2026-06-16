@@ -157,7 +157,11 @@ class CameraWorker(QThread):
             return
 
         if self.settings.get("expression_detection_mode") in {"external_ai", "hybrid_ai"}:
-            self.status_changed.emit("Camera running - external AI is optional and rate limited")
+            provider = self.settings.get("external_ai_provider", "openai")
+            if provider == "ollama":
+                self.status_changed.emit("Camera running - local Ollama AI is optional and rate limited")
+            else:
+                self.status_changed.emit("Camera running - external AI is optional and rate limited")
         else:
             self.status_changed.emit("Camera running - analysis is local")
         last_frame_time = time.monotonic()
@@ -239,7 +243,7 @@ class CameraWorker(QThread):
                                 ai_status = {
                                     "external_ai_disabled": "Off",
                                     "consent_required": "Consent required",
-                                    "missing_api_key": "Missing API key",
+                                    "missing_api_key": "Missing OpenAI API key",
                                     "face_not_found": "No face - AI not sent",
                                 }.get(reason, "Waiting")
 
@@ -268,11 +272,13 @@ class CameraWorker(QThread):
                         "detection_mode": self.settings["expression_detection_mode"],
                         "personalized_profile_active": profile_active,
                         "external_ai_enabled": bool(self.settings.get("external_ai_enabled", False)),
+                        "ai_provider": self.settings.get("external_ai_provider", "openai"),
                         "ai_request_sent": ai_request_sent,
                         "ai_status": ai_status,
                         "last_ai_result_time": last_ai_result_time,
                         "ai_result_label": last_ai_result.label if last_ai_result else "",
                         "ai_result_confidence": last_ai_result.confidence if last_ai_result else 0.0,
+                        "ai_result_source": last_ai_result.source if last_ai_result else "",
                         "ai_error": ai_error,
                         "local_result_label": local.label,
                         "local_result_confidence": local.confidence,

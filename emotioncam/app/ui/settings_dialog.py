@@ -27,6 +27,7 @@ from app.core.ai_privacy import AI_FULL_FRAME_WARNING, AI_PRIVACY_WARNING
 from app.core.ai_settings import has_stored_api_key
 from app.core.config import DEFAULT_CONFIG
 from app.core.expression_profile import ExpressionProfile
+from app.core.local_ai_client import DEFAULT_OLLAMA_ENDPOINT, DEFAULT_OLLAMA_MODEL
 from app.core.email_summary import store_password
 from app.core.user_profile import UserProfile
 
@@ -181,7 +182,7 @@ class SettingsDialog(QDialog):
         form.addRow("Minimum confidence for positive estimates", self.positive_minimum)
         content_layout.addWidget(detection)
 
-        ai_group = QGroupBox("Expression Detection Mode and External AI")
+        ai_group = QGroupBox("Expression Detection Mode and AI Analysis")
         ai_layout = QVBoxLayout(ai_group)
         ai_notice = QLabel(AI_PRIVACY_WARNING)
         ai_notice.setWordWrap(True)
@@ -192,14 +193,15 @@ class SettingsDialog(QDialog):
         self.detection_mode.addItem("Local only", "heuristic")
         self.detection_mode.addItem("Personalized only", "personalized")
         self.detection_mode.addItem("Personalized / Hybrid local", "hybrid")
-        self.detection_mode.addItem("External AI only", "external_ai")
+        self.detection_mode.addItem("AI only", "external_ai")
         self.detection_mode.addItem("Hybrid local + AI", "hybrid_ai")
-        self.external_ai_enabled = QCheckBox("Enable External AI Analysis")
-        self.external_ai_consent = QCheckBox(
-            "I understand selected cropped face images or frames may be sent to OpenAI."
-        )
+        self.external_ai_enabled = QCheckBox("Enable AI Analysis")
+        self.external_ai_consent = QCheckBox()
         self.ai_provider = QComboBox()
-        self.ai_provider.addItem("OpenAI", "openai")
+        self.ai_provider.addItem("OpenAI (cloud / uses API credits)", "openai")
+        self.ai_provider.addItem("Local Ollama (runs on this computer)", "ollama")
+        self.openai_model = QLineEdit()
+        self.openai_model.setPlaceholderText("gpt-4.1-mini")
         self.ai_key = QLineEdit()
         self.ai_key.setEchoMode(QLineEdit.Password)
         self.ai_key.setPlaceholderText(
@@ -209,6 +211,10 @@ class SettingsDialog(QDialog):
         )
         self.ai_store_key = QCheckBox("Store API key securely with Windows credential storage")
         self.ai_store_key.setChecked(True)
+        self.ollama_endpoint = QLineEdit()
+        self.ollama_endpoint.setPlaceholderText(DEFAULT_OLLAMA_ENDPOINT)
+        self.ollama_model = QLineEdit()
+        self.ollama_model.setPlaceholderText(DEFAULT_OLLAMA_MODEL)
         self.ai_cropped = QCheckBox("Send cropped face only (recommended)")
         self.ai_interval = self._decimal(5.0, 3600.0, 1.0)
         self.ai_timeout = self._decimal(5.0, 60.0, 1.0)
@@ -217,8 +223,11 @@ class SettingsDialog(QDialog):
         ai_form.addRow("", self.external_ai_enabled)
         ai_form.addRow("", self.external_ai_consent)
         ai_form.addRow("API provider", self.ai_provider)
+        ai_form.addRow("OpenAI model", self.openai_model)
         ai_form.addRow("OpenAI API key", self.ai_key)
         ai_form.addRow("", self.ai_store_key)
+        ai_form.addRow("Local Ollama endpoint", self.ollama_endpoint)
+        ai_form.addRow("Local Ollama vision model", self.ollama_model)
         ai_form.addRow("", self.ai_cropped)
         ai_form.addRow("AI request interval (seconds)", self.ai_interval)
         ai_form.addRow("AI timeout (seconds)", self.ai_timeout)
@@ -228,6 +237,10 @@ class SettingsDialog(QDialog):
         full_frame_warning.setWordWrap(True)
         full_frame_warning.setObjectName("subtitle")
         ai_layout.addWidget(full_frame_warning)
+        self.ai_provider_help = QLabel()
+        self.ai_provider_help.setWordWrap(True)
+        self.ai_provider_help.setObjectName("subtitle")
+        ai_layout.addWidget(self.ai_provider_help)
         self.test_ai_button = QPushButton("Test Connection")
         self.test_ai_button.clicked.connect(self._request_ai_test)
         ai_layout.addWidget(self.test_ai_button)
@@ -238,6 +251,7 @@ class SettingsDialog(QDialog):
         content_layout.addWidget(ai_group)
         self.external_ai_enabled.toggled.connect(self._sync_external_ai_mode)
         self.detection_mode.currentIndexChanged.connect(self._sync_external_ai_checkbox)
+        self.ai_provider.currentIndexChanged.connect(self._sync_ai_provider_fields)
 
         personalized = QGroupBox("Personalized expression calibration")
         personalized_layout = QVBoxLayout(personalized)
@@ -381,14 +395,45 @@ class SettingsDialog(QDialog):
         elif self.external_ai_enabled.isChecked():
             self._set_external_ai_enabled(False)
 
+    def _sync_ai_provider_fields(self) -> None:
+        provider = self.ai_provider.currentData()
+        is_ollama = provider == "ollama"
+        self.external_ai_consent.setText(
+            "I understand selected cropped face images or frames may be sent to OpenAI."
+            if not is_ollama
+            else "I understand selected cropped face images or frames may be sent to local Ollama on this computer."
+        )
+        self.openai_model.setEnabled(not is_ollama)
+        self.ai_key.setEnabled(not is_ollama)
+        self.ai_store_key.setEnabled(not is_ollama)
+        self.ollama_endpoint.setEnabled(is_ollama)
+        self.ollama_model.setEnabled(is_ollama)
+        if is_ollama:
+            self.ai_provider_help.setText(
+                "Local Ollama mode uses a model running on this PC. Install Ollama, then run "
+                f"`ollama pull {self.ollama_model.text() or DEFAULT_OLLAMA_MODEL}` in PowerShell. "
+                "EmotionCam only allows localhost/127.0.0.1 endpoints for this local mode."
+            )
+            if self.ai_test_status.text() == "Connection not tested yet.":
+                self.ai_test_status.setText("Local Ollama connection not tested yet.")
+        else:
+            self.ai_provider_help.setText(
+                "OpenAI mode may send selected cropped face images or frames to OpenAI. It needs "
+                "a valid API key, account quota, and internet access."
+            )
+            if self.ai_test_status.text() == "Local Ollama connection not tested yet.":
+                self.ai_test_status.setText("Connection not tested yet.")
+
     def _request_ai_test(self) -> None:
         self.set_ai_test_running()
         self.test_ai_requested.emit(self.ai_values())
 
     def set_ai_test_running(self) -> None:
+        provider = self.ai_provider.currentData()
+        provider_name = "Local Ollama" if provider == "ollama" else "OpenAI"
         self.test_ai_button.setEnabled(False)
         self.test_ai_button.setText("Testing...")
-        self.ai_test_status.setText("Testing OpenAI connection. This can take a few seconds.")
+        self.ai_test_status.setText(f"Testing {provider_name} connection. This can take a few seconds.")
 
     def set_ai_test_result(self, success: bool, message: str, show_popup: bool = True) -> None:
         clean_message = " ".join(str(message or "").split())
@@ -432,6 +477,9 @@ class SettingsDialog(QDialog):
         self.external_ai_consent.setChecked(data["external_ai_consent_accepted"])
         provider_index = self.ai_provider.findData(data["external_ai_provider"])
         self.ai_provider.setCurrentIndex(max(0, provider_index))
+        self.openai_model.setText(data.get("external_ai_model", "gpt-4.1-mini"))
+        self.ollama_endpoint.setText(data.get("local_ai_ollama_endpoint", DEFAULT_OLLAMA_ENDPOINT))
+        self.ollama_model.setText(data.get("local_ai_ollama_model", DEFAULT_OLLAMA_MODEL))
         self.ai_cropped.setChecked(data["external_ai_send_cropped_face_only"])
         self.ai_interval.setValue(data["external_ai_request_interval_seconds"])
         self.ai_timeout.setValue(data["external_ai_timeout_seconds"])
@@ -458,6 +506,7 @@ class SettingsDialog(QDialog):
         self.smtp_port.setValue(profile["smtp_port"])
         self.smtp_username.setText(profile["smtp_username"])
         self.smtp_tls.setChecked(profile["smtp_use_tls"])
+        self._sync_ai_provider_fields()
 
     def _reset_defaults(self) -> None:
         self._load(DEFAULT_CONFIG)
@@ -511,8 +560,11 @@ class SettingsDialog(QDialog):
             "external_ai_enabled": self.external_ai_enabled.isChecked(),
             "external_ai_consent_accepted": self.external_ai_consent.isChecked(),
             "external_ai_provider": self.ai_provider.currentData(),
+            "external_ai_model": self.openai_model.text(),
             "external_ai_api_key": self.ai_key.text(),
             "external_ai_store_key_securely": self.ai_store_key.isChecked(),
+            "local_ai_ollama_endpoint": self.ollama_endpoint.text(),
+            "local_ai_ollama_model": self.ollama_model.text(),
             "external_ai_send_cropped_face_only": self.ai_cropped.isChecked(),
             "external_ai_request_interval_seconds": self.ai_interval.value(),
             "external_ai_timeout_seconds": self.ai_timeout.value(),
@@ -545,6 +597,9 @@ class SettingsDialog(QDialog):
             "external_ai_enabled": self.external_ai_enabled.isChecked(),
             "external_ai_consent_accepted": self.external_ai_consent.isChecked(),
             "external_ai_provider": self.ai_provider.currentData(),
+            "external_ai_model": self.openai_model.text() or DEFAULT_CONFIG["external_ai_model"],
+            "local_ai_ollama_endpoint": self.ollama_endpoint.text() or DEFAULT_CONFIG["local_ai_ollama_endpoint"],
+            "local_ai_ollama_model": self.ollama_model.text() or DEFAULT_CONFIG["local_ai_ollama_model"],
             "external_ai_request_interval_seconds": self.ai_interval.value(),
             "external_ai_timeout_seconds": self.ai_timeout.value(),
             "external_ai_send_cropped_face_only": self.ai_cropped.isChecked(),

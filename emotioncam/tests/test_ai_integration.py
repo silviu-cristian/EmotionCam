@@ -1,12 +1,18 @@
 import json
 
 import numpy as np
+import pytest
 
 from app.core.ai_agent_classifier import ExternalAIExpressionClassifier, merge_ai_with_local
 from app.core.ai_client import crop_frame_for_ai, parse_ai_response_json
 from app.core.ai_rate_limiter import AIRateLimiter
 from app.core.config import DEFAULT_CONFIG
 from app.core.expression_backends import ExpressionResult
+from app.core.local_ai_client import (
+    LocalOllamaExpressionClient,
+    is_loopback_endpoint,
+    model_is_available,
+)
 
 
 class FakeAIClient:
@@ -130,3 +136,103 @@ def test_ai_rate_limiter_waits_between_requests():
     limiter.mark_sent(100.0)
     assert not limiter.due(104.9)
     assert limiter.due(110.0)
+
+
+def test_local_ollama_provider_does_not_require_openai_key():
+    client = FakeAIClient(ExpressionResult("smile_big", "positive", 0.84, {}, "local_ai", {}))
+    classifier = ExternalAIExpressionClassifier(
+        ai_settings(external_ai_provider="ollama"),
+        api_key="",
+        client=client,
+    )
+    ready, reason = classifier.ready_to_send((0, 0, 20, 20))
+    result = classifier.classify(np.zeros((40, 40, 3), dtype=np.uint8), (0, 0, 20, 20))
+    assert (ready, reason) == (True, "ready")
+    assert result.source == "local_ai"
+    assert client.calls == 1
+
+
+def test_hybrid_ai_accepts_local_ai_result():
+    local = ExpressionResult("neutral", "neutral", 0.7, {"neutral": 0.7}, "heuristic", {})
+    local_ai = ExpressionResult("smile_small", "positive", 0.8, {}, "local_ai", {})
+    assert merge_ai_with_local("hybrid_ai", local, local_ai).label == "smile_small"
+
+
+def test_ollama_endpoint_must_be_loopback():
+    assert is_loopback_endpoint("http://localhost:11434")
+    assert is_loopback_endpoint("http://127.0.0.1:11434/api")
+    assert not is_loopback_endpoint("https://example.com:11434")
+    client = LocalOllamaExpressionClient("https://example.com:11434", "llava:7b")
+    with pytest.raises(ValueError, match="localhost"):
+        client.test_connection()
+
+
+def test_ollama_model_matching_accepts_latest_alias():
+    assert model_is_available("llava", {"llava:latest"})
+    assert model_is_available("llava:7b", {"llava:7b"})
+    assert not model_is_available("llava:13b", {"llava:7b"})
+
+
+class _FakeHTTPResponse:
+    def __init__(self, payload):
+        self.payload = payload
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+    def read(self):
+        return json.dumps(self.payload).encode("utf-8")
+
+
+def test_local_ollama_test_connection_checks_installed_model(monkeypatch):
+    calls = []
+
+    def fake_urlopen(req, timeout):
+        calls.append((req.full_url, timeout))
+        return _FakeHTTPResponse({"models": [{"name": "llava:7b"}]})
+
+    monkeypatch.setattr("app.core.local_ai_client.request.urlopen", fake_urlopen)
+    client = LocalOllamaExpressionClient("http://localhost:11434/api", "llava:7b")
+    assert client.test_connection(3.0) is True
+    assert calls[0][0].endswith("/api/tags")
+
+
+def test_local_ollama_analyze_frame_parses_valid_response(monkeypatch):
+    payload = {
+        "label": "smile_small",
+        "group": "positive",
+        "confidence": 0.82,
+        "reason": "Visible smile.",
+        "alternatives": [{"label": "neutral", "confidence": 0.1}],
+    }
+
+    def fake_urlopen(req, timeout):
+        body = json.loads(req.data.decode("utf-8"))
+        assert body["stream"] is False
+        assert body["images"]
+        assert body["model"] == "llava:7b"
+        return _FakeHTTPResponse({"response": json.dumps(payload)})
+
+    monkeypatch.setattr("app.core.local_ai_client.request.urlopen", fake_urlopen)
+    frame = np.zeros((80, 80, 3), dtype=np.uint8)
+    result = LocalOllamaExpressionClient().analyze_frame(
+        frame,
+        face_box=(10, 10, 40, 40),
+        send_cropped_face_only=True,
+        timeout_seconds=3.0,
+    )
+    assert result.label == "smile_small"
+    assert result.source == "local_ai"
+
+
+def test_local_ollama_does_not_send_when_no_face():
+    result = LocalOllamaExpressionClient().analyze_frame(
+        np.zeros((40, 40, 3), dtype=np.uint8),
+        face_box=None,
+        send_cropped_face_only=True,
+    )
+    assert result.label == "no_face"
+    assert result.debug["ai_status"] == "not_sent"
