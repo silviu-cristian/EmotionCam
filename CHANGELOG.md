@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.1-ai - 2026-06-16
+
+- Fixed External AI activation so enabling External AI automatically selects
+  the Hybrid local + AI detection mode.
+- Added migration for existing configs where External AI was enabled and
+  consented but the detection mode was still local hybrid.
+- Added dashboard wording for the case where External AI is enabled but not
+  active in the selected detection mode.
+- Added tests for External AI mode synchronization.
+
 ## 1.1.0-ai - 2026-06-16
 
 - Added optional External AI Analysis using OpenAI vision through the Responses
