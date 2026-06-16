@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.3-ai - 2026-06-16
+
+- Added clear Settings-dialog feedback for External AI Test Connection.
+- The Test Connection button now changes to Testing while the request is
+  running, then shows a success or failure message in the Settings dialog.
+- Added popup confirmation for AI connection test success/failure.
+- Added tests for AI connection test progress and result feedback.
+
 ## 1.1.2-ai - 2026-06-16
 
 - Improved Windows camera startup reliability by trying DirectShow, Media

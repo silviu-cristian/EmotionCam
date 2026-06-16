@@ -64,7 +64,7 @@ Uninstall from **Windows Settings > Apps > Installed apps > EmotionCam**.
 - Best for privacy-focused and offline use.
 - Download asset: `EmotionCam_Setup.exe`.
 
-### v1.1.2-ai - Recommended AI-enabled release
+### v1.1.3-ai - Recommended AI-enabled release
 
 - Keeps the local heuristic, personalized, and hybrid classifiers.
 - Adds optional **External AI Analysis** using OpenAI vision.
@@ -76,6 +76,13 @@ Uninstall from **Windows Settings > Apps > Installed apps > EmotionCam**.
 - Falls back to local detection when the API key is missing, consent is missing,
   no face is found, the request times out, or the API fails.
 - Includes the camera-opening hotfix for Windows webcam backend fallback.
+- Includes clear Settings-dialog feedback for the External AI Test Connection
+  button.
+- Download asset: `EmotionCam_Setup_v1.1.3_AI.exe`.
+
+### v1.1.2-ai - Earlier AI-enabled hotfix
+
+- Added Windows webcam backend fallback for camera startup.
 - Download asset: `EmotionCam_Setup_v1.1.2_AI.exe`.
 
 ### v1.1.1-ai - Earlier AI-enabled hotfix
@@ -93,7 +100,7 @@ Uninstall from **Windows Settings > Apps > Installed apps > EmotionCam**.
 
 Choose **v1.0.0 Local-only** if privacy/offline use matters most.
 
-Choose **v1.1.2-ai AI-enabled** if you want optional stronger AI-assisted
+Choose **v1.1.3-ai AI-enabled** if you want optional stronger AI-assisted
 visible-expression analysis and accept that enabling External AI may send
 selected cropped face images or frames to OpenAI.
 
@@ -123,7 +130,7 @@ Default behavior:
 - No automatic screenshots or video recording
 - No saved webcam images or face images
 
-External AI behavior in v1.1.2-ai:
+External AI behavior in v1.1.3-ai:
 
 - Off by default.
 - Requires both **Enable External AI Analysis** and the consent checkbox.
@@ -193,7 +200,7 @@ Install Inno Setup 6, then run:
 The installer is generated at:
 
 ```text
-release\EmotionCam_Setup_v1.1.2_AI.exe
+release\EmotionCam_Setup_v1.1.3_AI.exe
 ```
 
 Do not commit the installer. Attach it to a GitHub Release.

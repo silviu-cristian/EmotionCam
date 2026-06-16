@@ -51,6 +51,7 @@ from app.ui.statistics_window import StatisticsWindow
 class MainWindow(QMainWindow):
     email_status_changed = Signal(str)
     ai_status_changed = Signal(str)
+    ai_test_finished = Signal(bool, str)
 
     def __init__(self, config: ConfigManager | None = None) -> None:
         super().__init__()
@@ -367,6 +368,7 @@ class MainWindow(QMainWindow):
         )
         dialog.test_email_requested.connect(self._send_test_email)
         dialog.test_ai_requested.connect(self._test_ai_connection)
+        self.ai_test_finished.connect(dialog.set_ai_test_result)
         if dialog.exec():
             was_running = bool(self.worker and self.worker.isRunning())
             if was_running:
@@ -446,11 +448,9 @@ class MainWindow(QMainWindow):
     def _test_ai_connection(self, values: dict) -> None:
         api_key = normalize_api_key(values.get("external_ai_api_key", "")) or load_api_key()
         if not api_key:
-            QMessageBox.warning(
-                self,
-                "External AI",
-                "Enter an OpenAI API key or store one securely before testing the connection.",
-            )
+            message = "Enter an OpenAI API key or store one securely before testing the connection."
+            self.statusBar().showMessage(message)
+            self.ai_test_finished.emit(False, message)
             return
         timeout = float(values.get("external_ai_timeout_seconds", 20.0))
         self.statusBar().showMessage("Testing OpenAI connection...")
@@ -459,9 +459,13 @@ class MainWindow(QMainWindow):
             try:
                 client = OpenAIExpressionClient(self.config.data.get("external_ai_model", "gpt-4.1-mini"))
                 client.test_connection(api_key, timeout)
-                self.ai_status_changed.emit("OpenAI connection test succeeded")
+                message = "OpenAI connection test succeeded."
+                self.ai_status_changed.emit(message)
+                self.ai_test_finished.emit(True, message)
             except Exception as exc:
-                self.ai_status_changed.emit(f"OpenAI connection test failed: {exc}")
+                message = f"OpenAI connection test failed: {exc}"
+                self.ai_status_changed.emit(message)
+                self.ai_test_finished.emit(False, message)
 
         threading.Thread(target=worker, daemon=True).start()
 
