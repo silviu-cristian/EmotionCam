@@ -31,10 +31,17 @@ frames. This keeps the documentation safe for public release.
 | `18_daily_email_summary_settings.png` | Email summary | Disabled-by-default email settings |
 | `19_background_mode_tray.png` | Background mode | Tray menu behavior explanation |
 | `20_logs_folder.png` | Logs folder | Metadata-only logs explanation |
+| `23_external_ai_settings_disabled.png` | External AI disabled | External AI Analysis off by default, provider/key fields, cropped-face-only option |
+| `24_external_ai_consent_warning.png` | External AI consent warning | Consent language explaining selected images may be sent outside the app |
+| `25_external_ai_settings_enabled_no_key.png` | External AI enabled without key | Enabled/consented state, masked API key field, Test Connection button |
+| `26_dashboard_ai_status.png` | Dashboard AI status | Detection mode, AI status, missing-key/fallback message |
+| `27_dashboard_hybrid_local_ai_mode.png` | Hybrid local + AI dashboard | Hybrid local + AI mode with AI waiting/status indicator |
 
 ## Rules
 
 - Do not use internet images.
 - Do not expose a real webcam feed.
 - Do not include private names, email addresses, logs, or profile data.
+- Do not include real OpenAI API keys, pasted keys, base64 image data, or
+  screenshots of secrets.
 - Regenerate screenshots before publishing a release if UI layout changes.

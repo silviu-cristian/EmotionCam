@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import time
+from concurrent.futures import Future, ThreadPoolExecutor
+from datetime import datetime
 from typing import Any
 
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtGui import QImage
 
+from .ai_agent_classifier import ExternalAIExpressionClassifier, merge_ai_with_local
+from .ai_rate_limiter import AIRateLimiter
 from .expression_backends import create_expression_classifier
+from .expression_backends import ExpressionResult
 from .expression_profile import ExpressionProfile
 from .face_detector import FaceDetector
 from .smoothing import ExpressionSmoother
@@ -63,10 +68,26 @@ class CameraWorker(QThread):
                 self.settings["face_missing_grace_seconds"],
             )
             classifier = create_expression_classifier(self.settings)
+            ai_mode = self.settings.get("expression_detection_mode") in {"external_ai", "hybrid_ai"}
+            ai_classifier = (
+                ExternalAIExpressionClassifier(
+                    self.settings,
+                    api_key=str(self.settings.get("_session_external_ai_api_key", "")),
+                )
+                if ai_mode
+                else None
+            )
+            ai_limiter = AIRateLimiter(self.settings.get("external_ai_request_interval_seconds", 10.0))
+            ai_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="EmotionCamAI") if ai_mode else None
+            ai_future: Future | None = None
+            last_ai_result: ExpressionResult | None = None
+            last_ai_result_time = ""
+            ai_status = "Off"
+            ai_error = ""
             profile_active = (
                 ExpressionProfile().exists
                 and self.settings["personalized_profile_enabled"]
-                and self.settings["expression_detection_mode"] in {"personalized", "hybrid"}
+                and self.settings["expression_detection_mode"] in {"personalized", "hybrid", "hybrid_ai"}
             )
             smoother = ExpressionSmoother(
                 self.settings["smoothing_window_seconds"],
@@ -77,79 +98,148 @@ class CameraWorker(QThread):
             self.camera_error.emit(f"Classifier unavailable: {exc}")
             return
 
-        self.status_changed.emit("Camera running - analysis is local")
+        if self.settings.get("expression_detection_mode") in {"external_ai", "hybrid_ai"}:
+            self.status_changed.emit("Camera running - external AI is optional and rate limited")
+        else:
+            self.status_changed.emit("Camera running - analysis is local")
         last_frame_time = time.monotonic()
         failures = 0
-        while self._running and not self.isInterruptionRequested():
-            ok, frame = capture.read()
-            now = time.monotonic()
-            if not ok:
-                failures += 1
-                if failures >= 20:
-                    self.camera_error.emit("OpenCV capture failure. The camera stream stopped.")
-                    break
-                self.msleep(30)
-                continue
-            failures = 0
-            elapsed = max(0.001, now - last_frame_time)
-            fps = 1.0 / elapsed
-            last_frame_time = now
+        try:
+            while self._running and not self.isInterruptionRequested():
+                ok, frame = capture.read()
+                now = time.monotonic()
+                if not ok:
+                    failures += 1
+                    if failures >= 20:
+                        self.camera_error.emit("OpenCV capture failure. The camera stream stopped.")
+                        break
+                    self.msleep(30)
+                    continue
+                failures = 0
+                elapsed = max(0.001, now - last_frame_time)
+                fps = 1.0 / elapsed
+                last_frame_time = now
 
-            if self._analysis_paused:
-                result = {
-                    "label": "unknown",
-                    "group": "neutral",
-                    "confidence": 0.0,
-                    "face_detected": False,
-                    "fps": fps,
-                    "paused": True,
-                }
-            else:
-                face = detector.detect(frame, now)
-                if face is None:
-                    raw = {
-                        "label": "no_face",
+                if ai_future and ai_future.done():
+                    try:
+                        last_ai_result = ai_future.result()
+                        ai_status = "AI result received"
+                        ai_error = ""
+                    except Exception as exc:
+                        last_ai_result = None
+                        ai_status = "Error / fallback to local"
+                        ai_error = type(exc).__name__
+                    last_ai_result_time = datetime.now().astimezone().isoformat(timespec="seconds")
+                    ai_future = None
+                elif ai_future:
+                    ai_status = "Analyzing"
+
+                if self._analysis_paused:
+                    result = {
+                        "label": "unknown",
                         "group": "neutral",
                         "confidence": 0.0,
                         "face_detected": False,
-                        "probabilities": {},
+                        "fps": fps,
+                        "paused": True,
                     }
                 else:
-                    raw = classifier.classify(frame, face.box, face).to_dict()
-                smooth = smoother.add(raw["label"], raw["confidence"], raw["face_detected"], now)
-                result = {
-                    "label": smooth.label,
-                    "group": smooth.group,
-                    "confidence": smooth.confidence,
-                    "face_detected": smooth.face_detected,
-                    "fps": fps,
-                    "paused": False,
-                    "raw_label": raw["label"],
-                    "face_detection_confidence": face.confidence if face else 0.0,
-                    "using_face_grace": face.using_grace if face else False,
-                    "detector_backend": face.backend if face else "none",
-                    "probabilities": raw.get("probabilities", {}),
-                    "classifier_source": raw.get("source", "heuristic"),
-                    "classifier_debug": raw.get("debug", {}),
-                    "detection_mode": self.settings["expression_detection_mode"],
-                    "personalized_profile_active": profile_active,
-                }
-                if face and self.settings["show_face_rectangle"]:
-                    x, y, width, height = face.box
-                    cv2.rectangle(
-                        frame,
-                        (x, y),
-                        (x + width, y + height),
-                        RECTANGLE_COLORS[smooth.group],
-                        3,
-                    )
+                    face = detector.detect(frame, now)
+                    if face is None:
+                        local = ExpressionResult(
+                            "no_face",
+                            "neutral",
+                            0.0,
+                            {},
+                            "local_no_face",
+                            {"reason": "face_not_found"},
+                            False,
+                        )
+                    else:
+                        local = classifier.classify(frame, face.box, face)
 
-            if not self._running or self.isInterruptionRequested():
-                break
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            height, width, channels = rgb.shape
-            image = QImage(rgb.data, width, height, channels * width, QImage.Format_RGB888).copy()
-            self.frame_ready.emit(image)
-            self.result_ready.emit(result)
+                    ai_request_sent = False
+                    if ai_classifier is not None:
+                        if ai_future is not None:
+                            ai_status = "Analyzing"
+                        else:
+                            ready, reason = ai_classifier.ready_to_send(face.box if face else None)
+                            if ready and ai_limiter.due(now):
+                                ai_limiter.mark_sent(now)
+                                ai_request_sent = True
+                                ai_status = (
+                                    "Sending cropped face"
+                                    if self.settings.get("external_ai_send_cropped_face_only", True)
+                                    else "Sending selected frame"
+                                )
+                                frame_copy = frame.copy()
+                                face_box = face.box if face else None
+                                ai_future = ai_executor.submit(ai_classifier.classify, frame_copy, face_box, face)
+                            elif ready:
+                                ai_status = "Waiting"
+                            else:
+                                ai_status = {
+                                    "external_ai_disabled": "Off",
+                                    "consent_required": "Consent required",
+                                    "missing_api_key": "Missing API key",
+                                    "face_not_found": "No face - AI not sent",
+                                }.get(reason, "Waiting")
+
+                    final = merge_ai_with_local(
+                        self.settings.get("expression_detection_mode", "heuristic"),
+                        local,
+                        last_ai_result,
+                        self.settings.get("external_ai_min_confidence", 0.55),
+                    )
+                    raw = final.to_dict()
+                    smooth = smoother.add(raw["label"], raw["confidence"], raw["face_detected"], now)
+                    result = {
+                        "label": smooth.label,
+                        "group": smooth.group,
+                        "confidence": smooth.confidence,
+                        "face_detected": smooth.face_detected,
+                        "fps": fps,
+                        "paused": False,
+                        "raw_label": raw["label"],
+                        "face_detection_confidence": face.confidence if face else 0.0,
+                        "using_face_grace": face.using_grace if face else False,
+                        "detector_backend": face.backend if face else "none",
+                        "probabilities": raw.get("probabilities", {}),
+                        "classifier_source": raw.get("source", "heuristic"),
+                        "classifier_debug": raw.get("debug", {}),
+                        "detection_mode": self.settings["expression_detection_mode"],
+                        "personalized_profile_active": profile_active,
+                        "external_ai_enabled": bool(self.settings.get("external_ai_enabled", False)),
+                        "ai_request_sent": ai_request_sent,
+                        "ai_status": ai_status,
+                        "last_ai_result_time": last_ai_result_time,
+                        "ai_result_label": last_ai_result.label if last_ai_result else "",
+                        "ai_result_confidence": last_ai_result.confidence if last_ai_result else 0.0,
+                        "ai_error": ai_error,
+                        "local_result_label": local.label,
+                        "local_result_confidence": local.confidence,
+                        "local_result_source": local.source,
+                        "final_result_source": raw.get("source", "heuristic"),
+                    }
+                    if face and self.settings["show_face_rectangle"]:
+                        x, y, width, height = face.box
+                        cv2.rectangle(
+                            frame,
+                            (x, y),
+                            (x + width, y + height),
+                            RECTANGLE_COLORS[smooth.group],
+                            3,
+                        )
+
+                if not self._running or self.isInterruptionRequested():
+                    break
+                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                height, width, channels = rgb.shape
+                image = QImage(rgb.data, width, height, channels * width, QImage.Format_RGB888).copy()
+                self.frame_ready.emit(image)
+                self.result_ready.emit(result)
+        finally:
+            if "ai_executor" in locals() and ai_executor is not None:
+                ai_executor.shutdown(wait=False, cancel_futures=True)
         capture.release()
         self.status_changed.emit("Camera stopped")

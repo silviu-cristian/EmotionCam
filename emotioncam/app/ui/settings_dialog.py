@@ -23,8 +23,9 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from app.core.ai_privacy import AI_FULL_FRAME_WARNING, AI_PRIVACY_WARNING
+from app.core.ai_settings import has_stored_api_key
 from app.core.config import DEFAULT_CONFIG
-from app.core.expression_backends import ExternalAIAgentExpressionClassifier
 from app.core.expression_profile import ExpressionProfile
 from app.core.email_summary import store_password
 from app.core.user_profile import UserProfile
@@ -77,6 +78,7 @@ class SettingsDialog(QDialog):
     export_profile_requested = Signal()
     import_profile_requested = Signal()
     test_email_requested = Signal(dict)
+    test_ai_requested = Signal(dict)
 
     def __init__(self, settings: dict, parent=None, user_profile: UserProfile | None = None) -> None:
         super().__init__(parent)
@@ -179,15 +181,62 @@ class SettingsDialog(QDialog):
         form.addRow("Minimum confidence for positive estimates", self.positive_minimum)
         content_layout.addWidget(detection)
 
+        ai_group = QGroupBox("Expression Detection Mode and External AI")
+        ai_layout = QVBoxLayout(ai_group)
+        ai_notice = QLabel(AI_PRIVACY_WARNING)
+        ai_notice.setWordWrap(True)
+        ai_notice.setObjectName("subtitle")
+        ai_layout.addWidget(ai_notice)
+        ai_form = QFormLayout()
+        self.detection_mode = QComboBox()
+        self.detection_mode.addItem("Local only", "heuristic")
+        self.detection_mode.addItem("Personalized only", "personalized")
+        self.detection_mode.addItem("Personalized / Hybrid local", "hybrid")
+        self.detection_mode.addItem("External AI only", "external_ai")
+        self.detection_mode.addItem("Hybrid local + AI", "hybrid_ai")
+        self.external_ai_enabled = QCheckBox("Enable External AI Analysis")
+        self.external_ai_consent = QCheckBox(
+            "I understand selected cropped face images or frames may be sent to OpenAI."
+        )
+        self.ai_provider = QComboBox()
+        self.ai_provider.addItem("OpenAI", "openai")
+        self.ai_key = QLineEdit()
+        self.ai_key.setEchoMode(QLineEdit.Password)
+        self.ai_key.setPlaceholderText(
+            "Stored securely; enter a new key to replace"
+            if has_stored_api_key()
+            else "Enter OpenAI API key"
+        )
+        self.ai_store_key = QCheckBox("Store API key securely with Windows credential storage")
+        self.ai_store_key.setChecked(True)
+        self.ai_cropped = QCheckBox("Send cropped face only (recommended)")
+        self.ai_interval = self._decimal(5.0, 3600.0, 1.0)
+        self.ai_timeout = self._decimal(5.0, 60.0, 1.0)
+        self.ai_debug = QCheckBox("Show AI debug info")
+        ai_form.addRow("Detection mode", self.detection_mode)
+        ai_form.addRow("", self.external_ai_enabled)
+        ai_form.addRow("", self.external_ai_consent)
+        ai_form.addRow("API provider", self.ai_provider)
+        ai_form.addRow("OpenAI API key", self.ai_key)
+        ai_form.addRow("", self.ai_store_key)
+        ai_form.addRow("", self.ai_cropped)
+        ai_form.addRow("AI request interval (seconds)", self.ai_interval)
+        ai_form.addRow("AI timeout (seconds)", self.ai_timeout)
+        ai_form.addRow("", self.ai_debug)
+        ai_layout.addLayout(ai_form)
+        full_frame_warning = QLabel(AI_FULL_FRAME_WARNING)
+        full_frame_warning.setWordWrap(True)
+        full_frame_warning.setObjectName("subtitle")
+        ai_layout.addWidget(full_frame_warning)
+        test_ai = QPushButton("Test Connection")
+        test_ai.clicked.connect(lambda: self.test_ai_requested.emit(self.ai_values()))
+        ai_layout.addWidget(test_ai)
+        content_layout.addWidget(ai_group)
+
         personalized = QGroupBox("Personalized expression calibration")
         personalized_layout = QVBoxLayout(personalized)
         mode_form = QFormLayout()
-        self.detection_mode = QComboBox()
-        self.detection_mode.addItem("Heuristic only", "heuristic")
-        self.detection_mode.addItem("Personalized only", "personalized")
-        self.detection_mode.addItem("Hybrid recommended", "hybrid")
         self.profile_status = QLabel()
-        mode_form.addRow("Expression detection mode", self.detection_mode)
         mode_form.addRow("Personalized profile status", self.profile_status)
         self.samples_per_expression = VisibleSpinBox()
         self.samples_per_expression.setRange(15, 120)
@@ -230,14 +279,6 @@ class SettingsDialog(QDialog):
             profile_file_actions.addWidget(button)
         personalized_layout.addLayout(profile_actions)
         personalized_layout.addLayout(profile_file_actions)
-        warning = QLabel(ExternalAIAgentExpressionClassifier.PRIVACY_WARNING)
-        warning.setWordWrap(True)
-        warning.setObjectName("subtitle")
-        personalized_layout.addWidget(warning)
-        external = QCheckBox("External AI agent backend (future feature)")
-        external.setChecked(False)
-        external.setEnabled(False)
-        personalized_layout.addWidget(external)
         content_layout.addWidget(personalized)
 
         display = QGroupBox("Display, messages, and local history")
@@ -327,6 +368,14 @@ class SettingsDialog(QDialog):
         self.recovery_popup_cooldown.setValue(data["positive_recovery_popup_cooldown_seconds"])
         index = self.detection_mode.findData(data["expression_detection_mode"])
         self.detection_mode.setCurrentIndex(max(0, index))
+        self.external_ai_enabled.setChecked(data["external_ai_enabled"])
+        self.external_ai_consent.setChecked(data["external_ai_consent_accepted"])
+        provider_index = self.ai_provider.findData(data["external_ai_provider"])
+        self.ai_provider.setCurrentIndex(max(0, provider_index))
+        self.ai_cropped.setChecked(data["external_ai_send_cropped_face_only"])
+        self.ai_interval.setValue(data["external_ai_request_interval_seconds"])
+        self.ai_timeout.setValue(data["external_ai_timeout_seconds"])
+        self.ai_debug.setChecked(data["external_ai_show_debug_info"])
         profile = ExpressionProfile()
         self.profile_status.setText(
             f"Available locally ({len(profile.samples)} trained expressions)"
@@ -354,6 +403,13 @@ class SettingsDialog(QDialog):
         self._load(DEFAULT_CONFIG)
 
     def _accept(self) -> None:
+        if self.external_ai_enabled.isChecked() and not self.external_ai_consent.isChecked():
+            QMessageBox.warning(
+                self,
+                "External AI Consent Required",
+                "External AI analysis cannot be enabled until you accept the consent checkbox.",
+            )
+            return
         try:
             candidate = UserProfile(self.user_profile.path)
             candidate.update(self.profile_values())
@@ -390,6 +446,20 @@ class SettingsDialog(QDialog):
             "store_password_securely": self.store_password.isChecked(),
         }
 
+    def ai_values(self) -> dict:
+        return {
+            "external_ai_enabled": self.external_ai_enabled.isChecked(),
+            "external_ai_consent_accepted": self.external_ai_consent.isChecked(),
+            "external_ai_provider": self.ai_provider.currentData(),
+            "external_ai_api_key": self.ai_key.text(),
+            "external_ai_store_key_securely": self.ai_store_key.isChecked(),
+            "external_ai_send_cropped_face_only": self.ai_cropped.isChecked(),
+            "external_ai_request_interval_seconds": self.ai_interval.value(),
+            "external_ai_timeout_seconds": self.ai_timeout.value(),
+            "external_ai_show_debug_info": self.ai_debug.isChecked(),
+            "expression_detection_mode": self.detection_mode.currentData(),
+        }
+
     def values(self) -> dict:
         return {
             "theme": self.theme.currentData(),
@@ -411,6 +481,14 @@ class SettingsDialog(QDialog):
             "negative_popup_cooldown_seconds": self.negative_popup_cooldown.value(),
             "positive_recovery_popup_cooldown_seconds": self.recovery_popup_cooldown.value(),
             "expression_detection_mode": self.detection_mode.currentData(),
+            "external_ai_backend_enabled": self.external_ai_enabled.isChecked(),
+            "external_ai_enabled": self.external_ai_enabled.isChecked(),
+            "external_ai_consent_accepted": self.external_ai_consent.isChecked(),
+            "external_ai_provider": self.ai_provider.currentData(),
+            "external_ai_request_interval_seconds": self.ai_interval.value(),
+            "external_ai_timeout_seconds": self.ai_timeout.value(),
+            "external_ai_send_cropped_face_only": self.ai_cropped.isChecked(),
+            "external_ai_show_debug_info": self.ai_debug.isChecked(),
             "personalized_profile_enabled": self.profile_enabled.isChecked(),
             "store_raw_calibration_images": self.store_raw_images.isChecked(),
             "calibration_samples_per_expression": self.samples_per_expression.value(),

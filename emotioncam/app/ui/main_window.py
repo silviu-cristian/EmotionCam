@@ -28,6 +28,8 @@ from PySide6.QtWidgets import (
 )
 
 from app.core.camera_worker import CameraWorker
+from app.core.ai_client import OpenAIExpressionClient
+from app.core.ai_settings import load_api_key, normalize_api_key, store_api_key as store_openai_api_key
 from app.core.background_notifications import BackgroundNotificationEngine
 from app.core.config import ConfigManager
 from app.core.interaction_engine import InteractionEngine
@@ -48,6 +50,7 @@ from app.ui.statistics_window import StatisticsWindow
 
 class MainWindow(QMainWindow):
     email_status_changed = Signal(str)
+    ai_status_changed = Signal(str)
 
     def __init__(self, config: ConfigManager | None = None) -> None:
         super().__init__()
@@ -77,6 +80,7 @@ class MainWindow(QMainWindow):
         self.background_active = False
         self._exiting = False
         self._summary_send_running = False
+        self.session_ai_api_key = ""
 
         self.pages = QStackedWidget()
         self.setCentralWidget(self.pages)
@@ -96,6 +100,7 @@ class MainWindow(QMainWindow):
         self.summary_timer.timeout.connect(self._check_daily_summary)
         self.summary_timer.start(60_000)
         self.email_status_changed.connect(self.statusBar().showMessage)
+        self.ai_status_changed.connect(self.statusBar().showMessage)
         QTimer.singleShot(2_000, self._check_daily_summary)
 
     def _build_dashboard(self) -> QWidget:
@@ -107,11 +112,11 @@ class MainWindow(QMainWindow):
         heading = QHBoxLayout()
         title = QLabel("EmotionCam")
         title.setObjectName("title")
-        local = QLabel("LOCAL-ONLY  |  NO IMAGE SAVING  |  NO IDENTITY RECOGNITION")
-        local.setObjectName("subtitle")
+        self.privacy_mode_label = QLabel("LOCAL BY DEFAULT  |  EXTERNAL AI OFF  |  NO IMAGE SAVING")
+        self.privacy_mode_label.setObjectName("subtitle")
         heading.addWidget(title)
         heading.addStretch()
-        heading.addWidget(local)
+        heading.addWidget(self.privacy_mode_label)
         outer.addLayout(heading)
 
         body = QHBoxLayout()
@@ -132,6 +137,8 @@ class MainWindow(QMainWindow):
         self.confidence_label = QLabel("Confidence: --")
         self.mode_label = QLabel()
         self.profile_label = QLabel()
+        self.ai_status_label = QLabel("External AI: off")
+        self.ai_detail_label = QLabel("AI result: --")
         self.message_label = QLabel("Start the camera when you are ready.")
         self.message_label.setObjectName("message")
         self.message_label.setWordWrap(True)
@@ -139,6 +146,8 @@ class MainWindow(QMainWindow):
         panel_layout.addWidget(self.confidence_label)
         panel_layout.addWidget(self.mode_label)
         panel_layout.addWidget(self.profile_label)
+        panel_layout.addWidget(self.ai_status_label)
+        panel_layout.addWidget(self.ai_detail_label)
         panel_layout.addWidget(self.message_label)
         panel_layout.addWidget(QLabel("Recent expression timeline"))
         self.timeline = TimelineWidget()
@@ -217,7 +226,10 @@ class MainWindow(QMainWindow):
             return
         self.analysis_paused = False
         self.pause_button.setText("Pause Analysis")
-        self.worker = CameraWorker(self.config.data)
+        worker_settings = dict(self.config.data)
+        if self.session_ai_api_key:
+            worker_settings["_session_external_ai_api_key"] = self.session_ai_api_key
+        self.worker = CameraWorker(worker_settings)
         self.worker.frame_ready.connect(self.camera_view.set_frame)
         self.worker.result_ready.connect(self._handle_result)
         self.worker.status_changed.connect(self.statusBar().showMessage)
@@ -255,10 +267,22 @@ class MainWindow(QMainWindow):
         self.expression_label.setText(label.replace("_", " ").title())
         self.group_label.setText(f"Expression group: {group.title()}")
         self.mode_label.setText(
-            f"Detection mode: {result.get('detection_mode', self.config.data['expression_detection_mode']).title()}"
+            f"Detection mode: {self._detection_mode_text(result.get('detection_mode', self.config.data['expression_detection_mode']))}"
         )
         active = result.get("personalized_profile_active", ExpressionProfile().exists)
         self.profile_label.setText(f"Personalized profile: {'active' if active else 'inactive'}")
+        ai_enabled = bool(result.get("external_ai_enabled", self.config.data["external_ai_enabled"]))
+        ai_status = result.get("ai_status", "Off")
+        self.ai_status_label.setText(f"External AI: {'enabled' if ai_enabled else 'off'} | {ai_status}")
+        ai_result = result.get("ai_result_label", "")
+        ai_confidence = float(result.get("ai_result_confidence", 0.0) or 0.0)
+        ai_time = result.get("last_ai_result_time", "")
+        self.ai_detail_label.setText(
+            f"AI result: {ai_result or '--'}"
+            + (f" ({ai_confidence:.0%})" if ai_result else "")
+            + (f" at {ai_time}" if ai_time else "")
+        )
+        self._refresh_ai_header()
         if self.config.data["show_confidence_values"]:
             self.confidence_label.setText(f"Confidence: {confidence:.0%}")
         else:
@@ -287,6 +311,11 @@ class MainWindow(QMainWindow):
             f"Grace tracking: {'yes' if result.get('using_face_grace') else 'no'}\n"
             f"Detector: {result.get('detector_backend', '--')}\n"
             f"Classifier source: {result.get('classifier_source', '--')}\n"
+            f"Local result: {result.get('local_result_label', '--')} "
+            f"({result.get('local_result_confidence', 0.0):.0%})\n"
+            f"AI status: {ai_status}\n"
+            f"AI result: {ai_result or '--'} ({ai_confidence:.0%})\n"
+            f"Final source: {result.get('final_result_source', '--')}\n"
             f"Top estimates: {probabilities or '--'}"
         )
 
@@ -334,10 +363,12 @@ class MainWindow(QMainWindow):
             lambda: (self.import_profile(), dialog._load(self.config.data))
         )
         dialog.test_email_requested.connect(self._send_test_email)
+        dialog.test_ai_requested.connect(self._test_ai_connection)
         if dialog.exec():
             was_running = bool(self.worker and self.worker.isRunning())
             if was_running:
                 self.stop_camera()
+            self._handle_ai_key_from_settings(dialog.ai_values())
             self.config.update(dialog.values())
             self.user_profile.load()
             apply_theme(self.config.data["theme"])
@@ -356,6 +387,7 @@ class MainWindow(QMainWindow):
             self.debug_panel.setVisible(self.config.data["debug_panel_enabled"])
             self._refresh_logging_status()
             self._refresh_profile_status()
+            self._refresh_ai_header()
             if was_running:
                 self.start_camera()
 
@@ -383,6 +415,52 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Email Summary", str(exc))
         except Exception as exc:
             QMessageBox.warning(self, "Email Summary", f"Could not send the test summary: {exc}")
+
+    def _handle_ai_key_from_settings(self, values: dict) -> None:
+        api_key = normalize_api_key(values.get("external_ai_api_key", ""))
+        if not api_key:
+            return
+        if values.get("external_ai_store_key_securely", True):
+            if store_openai_api_key(api_key):
+                self.session_ai_api_key = ""
+                self.statusBar().showMessage("OpenAI API key stored with secure credential storage")
+                return
+            self.session_ai_api_key = api_key
+            QMessageBox.information(
+                self,
+                "External AI API Key",
+                "Secure credential storage is unavailable. The API key will be used for this "
+                "app session only and was not written to config.json.",
+            )
+            return
+        self.session_ai_api_key = api_key
+        QMessageBox.information(
+            self,
+            "External AI API Key",
+            "The API key will be used for this app session only and was not saved.",
+        )
+
+    def _test_ai_connection(self, values: dict) -> None:
+        api_key = normalize_api_key(values.get("external_ai_api_key", "")) or load_api_key()
+        if not api_key:
+            QMessageBox.warning(
+                self,
+                "External AI",
+                "Enter an OpenAI API key or store one securely before testing the connection.",
+            )
+            return
+        timeout = float(values.get("external_ai_timeout_seconds", 20.0))
+        self.statusBar().showMessage("Testing OpenAI connection...")
+
+        def worker() -> None:
+            try:
+                client = OpenAIExpressionClient(self.config.data.get("external_ai_model", "gpt-4.1-mini"))
+                client.test_connection(api_key, timeout)
+                self.ai_status_changed.emit("OpenAI connection test succeeded")
+            except Exception as exc:
+                self.ai_status_changed.emit(f"OpenAI connection test failed: {exc}")
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def _check_daily_summary(self) -> None:
         self.user_profile.load()
@@ -461,12 +539,33 @@ class MainWindow(QMainWindow):
         exists = (
             profile.exists
             and self.config.data["personalized_profile_enabled"]
-            and self.config.data["expression_detection_mode"] in {"personalized", "hybrid"}
+            and self.config.data["expression_detection_mode"] in {"personalized", "hybrid", "hybrid_ai"}
         )
         self.mode_label.setText(
-            f"Detection mode: {self.config.data['expression_detection_mode'].title()}"
+            f"Detection mode: {self._detection_mode_text(self.config.data['expression_detection_mode'])}"
         )
         self.profile_label.setText(f"Personalized profile: {'active' if exists else 'inactive'}")
+        self._refresh_ai_header()
+
+    def _refresh_ai_header(self) -> None:
+        if self.config.data.get("external_ai_enabled") and self.config.data.get("external_ai_consent_accepted"):
+            self.privacy_mode_label.setText(
+                "LOCAL BY DEFAULT  |  EXTERNAL AI ENABLED BY CONSENT  |  NO IMAGE SAVING"
+            )
+        else:
+            self.privacy_mode_label.setText(
+                "LOCAL BY DEFAULT  |  EXTERNAL AI OFF  |  NO IMAGE SAVING"
+            )
+
+    @staticmethod
+    def _detection_mode_text(mode: str) -> str:
+        return {
+            "heuristic": "Local only",
+            "personalized": "Personalized only",
+            "hybrid": "Personalized / Hybrid local",
+            "external_ai": "External AI only",
+            "hybrid_ai": "Hybrid local + AI",
+        }.get(mode, str(mode).replace("_", " ").title())
 
     def open_calibration(self, add_more: bool = True) -> None:
         was_running = bool(self.worker and self.worker.isRunning())
@@ -557,12 +656,21 @@ class MainWindow(QMainWindow):
             self.start_camera()
         self.background_active = True
         self.config.update({"background_mode_enabled": True})
-        self.background_label.setText("Background mode: active, processing locally")
+        ai_active = (
+            self.config.data.get("external_ai_enabled")
+            and self.config.data.get("external_ai_consent_accepted")
+            and self.config.data.get("expression_detection_mode") in {"external_ai", "hybrid_ai"}
+        )
+        self.background_label.setText(
+            "Background mode: active, local-first with optional External AI"
+            if ai_active
+            else "Background mode: active, processing locally"
+        )
         if QSystemTrayIcon.isSystemTrayAvailable():
             self.tray.show()
             self.tray.showMessage(
-                "EmotionCam running locally",
-                "Camera processing and optional metadata logging remain active locally.",
+                "EmotionCam running in background",
+                "Analysis continues with your current privacy and External AI settings.",
             )
             self.hide()
         else:

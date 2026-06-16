@@ -1,6 +1,6 @@
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QDoubleSpinBox, QSpinBox
+from PySide6.QtWidgets import QApplication, QDoubleSpinBox, QLineEdit, QSpinBox
 
 from app.core.config import DEFAULT_CONFIG
 from app.ui.settings_dialog import SettingsDialog
@@ -33,5 +33,20 @@ def test_theme_setting_round_trips():
     dialog = SettingsDialog({**DEFAULT_CONFIG, "theme": "light"})
     assert dialog.theme.currentData() == "light"
     assert dialog.values()["theme"] == "light"
+    dialog.close()
+    assert application is not None
+
+
+def test_external_ai_controls_exist_and_do_not_expose_key():
+    application = QApplication.instance() or QApplication([])
+    dialog = SettingsDialog(DEFAULT_CONFIG)
+    modes = [dialog.detection_mode.itemData(index) for index in range(dialog.detection_mode.count())]
+    assert "external_ai" in modes
+    assert "hybrid_ai" in modes
+    assert dialog.ai_key.echoMode() == QLineEdit.Password
+    values = dialog.values()
+    ai_values = dialog.ai_values()
+    assert "external_ai_api_key" not in values
+    assert "external_ai_api_key" in ai_values
     dialog.close()
     assert application is not None

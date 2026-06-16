@@ -273,6 +273,70 @@ def static_card(name, title, lines):
     save(image, name)
 
 
+def ai_settings(name, enabled=False, consent=False, mode="Local only"):
+    image, draw, c = base("dark")
+    draw.text((50, 38), "Settings > Expression Detection Mode and External AI", fill=c["text"], font=F_TITLE)
+    panel(draw, (50, 105, 1230, 705), c)
+    draw_wrapped(
+        draw,
+        "External AI analysis sends selected cropped face images or selected frames to an external AI service. It is disabled by default and requires explicit consent.",
+        (85, 140),
+        1080,
+        c["muted"],
+        F_BODY,
+    )
+    rows = [
+        ("Detection mode", mode),
+        ("Enable External AI Analysis", "On" if enabled else "Off"),
+        ("Consent accepted", "Yes" if consent else "No - no images are sent"),
+        ("API provider", "OpenAI"),
+        ("OpenAI API key", "•••••••• (not shown)"),
+        ("Send cropped face only", "On - recommended"),
+        ("AI request interval", "10 seconds"),
+        ("AI timeout", "20 seconds"),
+        ("Show AI debug info", "Off"),
+    ]
+    y = 235
+    for label, value in rows:
+        draw.text((95, y), label, fill=c["muted"], font=F_BODY)
+        draw.rounded_rectangle((390, y - 8, 960, y + 30), radius=7, fill=c["input"], outline=c["line"])
+        draw.text((405, y - 3), value, fill=c["text"], font=F_BODY)
+        y += 50
+    button(draw, (965, 600, 1165, 648), "Test Connection", c, True)
+    save(image, name)
+
+
+def dashboard_ai(name, mode="Hybrid local + AI", status="Missing API key"):
+    image, draw, c = base("dark")
+    icon(draw, 26, 22, 50)
+    draw.text((90, 27), "EmotionCam", fill=c["text"], font=F_H1)
+    draw.text((400, 42), "LOCAL BY DEFAULT | EXTERNAL AI ENABLED BY CONSENT | NO IMAGE SAVING", fill=c["muted"], font=F_SMALL)
+    panel(draw, (18, 86, 918, 720), c)
+    panel(draw, (932, 86, 1262, 720), c)
+    avatar(draw, (80, 150, 860, 650), "positive")
+    x = 955
+    draw.text((x, 110), "Current likely expression", fill=c["muted"], font=F_BODY)
+    draw.text((x, 140), "Smile Small", fill=c["text"], font=F_TITLE)
+    for offset, line in enumerate([
+        "Expression group: Positive",
+        "Confidence: 78%",
+        f"Detection mode: {mode}",
+        "Personalized profile: active",
+        f"External AI: enabled | {status}",
+        "AI result: --",
+        "Final source: local fallback",
+    ]):
+        draw.text((x, 200 + offset * 30), line, fill=c["text"], font=F_BODY)
+    draw.rounded_rectangle((955, 440, 1238, 530), radius=12, fill=c["panel2"], outline=c["line"])
+    draw_wrapped(draw, "If no key is configured, EmotionCam keeps using local detection.", (975, 460), 240, c["text"], F_BODY)
+    labels = ["Start Camera", "Stop Camera", "Settings", "Statistics", "Run in background", "Exit"]
+    x0 = 32
+    for i, label in enumerate(labels):
+        button(draw, (x0, 735, x0 + 170, 778), label, c, i == 0)
+        x0 += 182
+    save(image, name)
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for file in OUT.glob("*.png"):
@@ -305,6 +369,11 @@ def main() -> None:
         "expression_history.jsonl stores metadata only.",
         "No webcam images, videos, or face images are saved in logs.",
     ])
+    ai_settings("23_external_ai_settings_disabled.png")
+    ai_settings("24_external_ai_consent_warning.png", enabled=True, consent=False, mode="Hybrid local + AI")
+    ai_settings("25_external_ai_settings_enabled_no_key.png", enabled=True, consent=True, mode="Hybrid local + AI")
+    dashboard_ai("26_dashboard_ai_status.png", "External AI only", "Missing API key")
+    dashboard_ai("27_dashboard_hybrid_local_ai_mode.png", "Hybrid local + AI", "Waiting")
 
 
 if __name__ == "__main__":

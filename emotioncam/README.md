@@ -3,9 +3,9 @@
 ![EmotionCam icon](app/assets/icon.png)
 
 EmotionCam is a Windows desktop app that estimates visible facial expressions
-from a local webcam feed. It is designed for one person using a built-in laptop
-webcam and presents smoothed, approximate expression estimates such as neutral,
-smile, focused, surprised, tired, or unknown.
+from a webcam feed. It is designed for one person using a built-in laptop webcam
+and presents smoothed, approximate expression estimates such as neutral, smile,
+focused, surprised, tired, or unknown.
 
 EmotionCam estimates **visible expressions**, not guaranteed true emotions. It
 does not diagnose mood or mental state and is not for medical, psychological,
@@ -19,6 +19,9 @@ legal, hiring, security, surveillance, or lie-detection decisions.
 - Visible, clickable numeric spinner arrows in Settings
 - Local webcam processing with MediaPipe Face Landmarker and OpenCV fallback
 - Conservative heuristic, personalized, and hybrid expression classifiers
+- Optional external AI analysis with explicit consent and OpenAI API key
+- Hybrid local + AI mode with rate-limited selected-frame analysis
+- Cropped-face-only AI sending mode enabled by default
 - Personalized calibration using local landmark/blendshape feature vectors
 - Blue/orange/gray smoothed face rectangle groups
 - Background tray mode with safe cooldown-controlled notifications
@@ -36,7 +39,7 @@ repository because generated `.exe` files are large binary files.
 
 1. Go to
    [github.com/silviu-cristian/EmotionCam/releases](https://github.com/silviu-cristian/EmotionCam/releases).
-2. Download `EmotionCam_Setup.exe` from the latest release.
+2. Download the installer for the release you want.
 3. Run the installer.
 4. Launch EmotionCam from the Start Menu or optional desktop shortcut.
 5. Allow Windows camera access for desktop apps if prompted.
@@ -51,6 +54,36 @@ EmotionCam installs per user under:
 ```
 
 Uninstall from **Windows Settings > Apps > Installed apps > EmotionCam**.
+
+## Releases
+
+### v1.0.0 - Local-only release
+
+- Fully local visible-expression estimation.
+- No external AI analysis.
+- Best for privacy-focused and offline use.
+- Download asset: `EmotionCam_Setup.exe`.
+
+### v1.1.0-ai - AI-enabled release
+
+- Keeps the local heuristic, personalized, and hybrid classifiers.
+- Adds optional **External AI Analysis** using OpenAI vision.
+- External AI is disabled by default.
+- Requires explicit consent and an OpenAI API key before any AI request can run.
+- Sends one selected cropped face image by default, never every webcam frame.
+- Can be switched to full-frame sending only by the user, with a warning that
+  background details may be included.
+- Falls back to local detection when the API key is missing, consent is missing,
+  no face is found, the request times out, or the API fails.
+- Download asset: `EmotionCam_Setup_v1.1.0_AI.exe`.
+
+## Which version should I download?
+
+Choose **v1.0.0 Local-only** if privacy/offline use matters most.
+
+Choose **v1.1.0-ai AI-enabled** if you want optional stronger AI-assisted
+visible-expression analysis and accept that enabling External AI may send
+selected cropped face images or frames to OpenAI.
 
 ## How to start the demo
 
@@ -78,6 +111,15 @@ Default behavior:
 - No automatic screenshots or video recording
 - No saved webcam images or face images
 
+External AI behavior in v1.1.0-ai:
+
+- Off by default.
+- Requires both **Enable External AI Analysis** and the consent checkbox.
+- Requires an OpenAI API key.
+- Uses cropped-face-only sending by default.
+- Never logs images, base64 data, or API keys.
+- Does not identify the user or infer sensitive traits.
+
 Optional features:
 
 - Metadata history logs can be disabled.
@@ -95,6 +137,10 @@ Optional features:
 | Personalized expression profile | `%LOCALAPPDATA%\EmotionCam\profile\expression_profile.json` |
 | User profile and email preferences | `%LOCALAPPDATA%\EmotionCam\profile\user_profile.json` |
 | Optional debug calibration images | `%LOCALAPPDATA%\EmotionCam\profile\debug_images\` |
+
+OpenAI API keys are not stored in `config.json`. When the user chooses secure
+storage, EmotionCam uses Windows credential storage through `keyring`. If secure
+storage is unavailable, the key can be used for the current app session only.
 
 ## Run from source
 
@@ -135,7 +181,7 @@ Install Inno Setup 6, then run:
 The installer is generated at:
 
 ```text
-release\EmotionCam_Setup.exe
+release\EmotionCam_Setup_v1.1.0_AI.exe
 ```
 
 Do not commit the installer. Attach it to a GitHub Release.
@@ -167,7 +213,11 @@ python -m compileall -q app
 - `app/ui/statistics_window.py`: local metadata charts
 - `app/core/camera_worker.py`: threaded webcam capture and analysis
 - `app/core/face_detector.py`: MediaPipe/OpenCV local face detection
-- `app/core/expression_backends.py`: heuristic, personalized, hybrid, disabled external interface
+- `app/core/expression_backends.py`: shared classifier interface and local backends
+- `app/core/ai_client.py`: OpenAI Responses API vision client and strict JSON validation
+- `app/core/ai_agent_classifier.py`: optional external AI backend, consent checks, fallback
+- `app/core/ai_rate_limiter.py`: external AI request interval control
+- `app/core/ai_settings.py`: secure API-key storage helpers
 - `app/core/expression_features.py`: normalized expression feature extraction
 - `app/core/statistics.py`: resilient log parsing and summaries
 - `app/core/user_profile.py`: local optional name/email profile
@@ -182,3 +232,6 @@ python -m compileall -q app
 - The app is designed for one visible user and one local webcam.
 - SMTP email summaries require user-supplied provider settings and network
   access.
+- External AI analysis requires network access, an OpenAI API key, and explicit
+  consent. It can improve estimates, but it remains approximate and may be
+  wrong.

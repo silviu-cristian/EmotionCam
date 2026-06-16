@@ -34,6 +34,20 @@ def test_existing_config_migrates_new_defaults(tmp_path):
     assert data["summary_send_time"] == "20:00"
     assert data["email_summary_use_tls"] is True
     assert data["email_summary_method"] == "smtp"
+    assert data["external_ai_enabled"] is False
+    assert data["external_ai_consent_accepted"] is False
+    assert data["external_ai_request_interval_seconds"] == 10.0
+    assert data["external_ai_timeout_seconds"] == 20.0
+    assert data["external_ai_send_cropped_face_only"] is True
+
+
+def test_api_key_is_not_saved_in_plain_config(tmp_path):
+    path = tmp_path / "config.json"
+    manager = ConfigManager(path)
+    manager.update({"external_ai_api_key": "sk-test-secret", "external_ai_enabled": True})
+    saved = path.read_text(encoding="utf-8")
+    assert "sk-test-secret" not in saved
+    assert "external_ai_api_key" not in saved
 
 
 def test_invalid_theme_falls_back_to_dark(tmp_path):

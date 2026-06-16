@@ -10,6 +10,9 @@ from typing import Any
 from .paths import config_path, profile_path
 
 
+EXPRESSION_DETECTION_MODES = {"heuristic", "personalized", "hybrid", "external_ai", "hybrid_ai"}
+
+
 DEFAULT_CONFIG: dict[str, Any] = {
     "first_launch_complete": False,
     "theme": "dark",
@@ -44,6 +47,15 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "store_raw_calibration_images": False,
     "minimum_samples_per_expression": 15,
     "external_ai_backend_enabled": False,
+    "external_ai_enabled": False,
+    "external_ai_consent_accepted": False,
+    "external_ai_provider": "openai",
+    "external_ai_request_interval_seconds": 10.0,
+    "external_ai_timeout_seconds": 20.0,
+    "external_ai_send_cropped_face_only": True,
+    "external_ai_show_debug_info": False,
+    "external_ai_model": "gpt-4.1-mini",
+    "external_ai_min_confidence": 0.55,
 }
 
 
@@ -73,6 +85,8 @@ class ConfigManager:
             and profile_path().exists()
         ):
             self.data["expression_detection_mode"] = "hybrid"
+        if "external_ai_enabled" not in loaded_keys and "external_ai_backend_enabled" in loaded_keys:
+            self.data["external_ai_enabled"] = bool(self.data["external_ai_backend_enabled"])
         return deepcopy(self.data)
 
     def save(self) -> None:
@@ -101,6 +115,12 @@ class ConfigManager:
         default = DEFAULT_CONFIG[key]
         if key == "theme":
             return value if value in {"dark", "light"} else None
+        if key == "expression_detection_mode":
+            return value if value in EXPRESSION_DETECTION_MODES else None
+        if key == "external_ai_provider":
+            return value if value == "openai" else None
+        if key == "external_ai_model":
+            return value.strip() if isinstance(value, str) and value.strip() else None
         if isinstance(default, bool):
             return value if isinstance(value, bool) else None
         if isinstance(default, (int, float)) and isinstance(value, (int, float)) and not isinstance(value, bool):
