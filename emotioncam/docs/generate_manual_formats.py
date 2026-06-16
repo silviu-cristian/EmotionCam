@@ -69,11 +69,11 @@ def add_cover(document: Document) -> None:
     run.font.color.rgb = RGBColor.from_string("203748")
     subtitle = document.add_paragraph()
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = subtitle.add_run("Local-first visible-expression estimates with optional external AI analysis")
+    run = subtitle.add_run("Local-first visible-expression estimates with optional Local Ollama or OpenAI AI analysis")
     run.italic = True
     run.font.size = Pt(14)
     run.font.color.rgb = RGBColor.from_string("52687C")
-    date = document.add_paragraph("Version 1.1.0 AI-enabled | Updated June 16, 2026")
+    date = document.add_paragraph("Version 1.2.0 AI-enabled | Updated June 16, 2026")
     date.alignment = WD_ALIGN_PARAGRAPH.CENTER
     document.add_page_break()
 

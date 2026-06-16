@@ -19,7 +19,7 @@ legal, hiring, security, surveillance, or lie-detection decisions.
 - Visible, clickable numeric spinner arrows in Settings
 - Local webcam processing with MediaPipe Face Landmarker and OpenCV fallback
 - Conservative heuristic, personalized, and hybrid expression classifiers
-- Optional external AI analysis with explicit consent and OpenAI API key
+- Optional AI analysis with explicit consent: Local Ollama or OpenAI
 - Hybrid local + AI mode with rate-limited selected-frame analysis
 - Cropped-face-only AI sending mode enabled by default
 - Personalized calibration using local landmark/blendshape feature vectors
@@ -64,7 +64,19 @@ Uninstall from **Windows Settings > Apps > Installed apps > EmotionCam**.
 - Best for privacy-focused and offline use.
 - Download asset: `EmotionCam_Setup.exe`.
 
-### v1.1.3-ai - Recommended AI-enabled release
+### v1.2.0-ai - Recommended AI-enabled release
+
+- Keeps the local heuristic, personalized, and hybrid classifiers.
+- Adds optional **Local Ollama AI** for AI-assisted visible-expression analysis
+  on your own PC without OpenAI quota.
+- Keeps optional **OpenAI External AI** for users who explicitly configure an
+  API key and accept the cloud privacy tradeoff.
+- Local Ollama mode only allows localhost/127.0.0.1 endpoints.
+- Disabled by default, consent-gated, rate limited, and cropped-face-only by
+  default.
+- Download asset: `EmotionCam_Setup_v1.2.0_AI.exe`.
+
+### v1.1.3-ai - Earlier AI-enabled hotfix
 
 - Keeps the local heuristic, personalized, and hybrid classifiers.
 - Adds optional **External AI Analysis** using OpenAI vision.
@@ -100,9 +112,32 @@ Uninstall from **Windows Settings > Apps > Installed apps > EmotionCam**.
 
 Choose **v1.0.0 Local-only** if privacy/offline use matters most.
 
-Choose **v1.1.3-ai AI-enabled** if you want optional stronger AI-assisted
-visible-expression analysis and accept that enabling External AI may send
-selected cropped face images or frames to OpenAI.
+Choose **v1.2.0-ai AI-enabled** if you want optional AI-assisted
+visible-expression analysis. Choose **Local Ollama** inside Settings if you want
+AI analysis without OpenAI quota or cloud upload. Choose **OpenAI** only if you
+explicitly accept that selected cropped face images or frames may be sent to
+OpenAI.
+
+## Local Ollama AI setup
+
+Local Ollama is the easiest no-OpenAI-quota AI backend. It runs on your own PC.
+Install Ollama separately, then pull a vision model:
+
+```powershell
+ollama pull llava:7b
+```
+
+In EmotionCam:
+
+1. Open **Settings**.
+2. Find **Expression Detection Mode and AI Analysis**.
+3. Set **API provider** to **Local Ollama (runs on this computer)**.
+4. Keep **Local Ollama endpoint** as `http://localhost:11434`.
+5. Keep **Local Ollama vision model** as `llava:7b`, unless you installed a
+   different local vision model.
+6. Click **Test Connection**.
+7. Enable AI Analysis, accept the local Ollama consent checkbox, and select
+   **Hybrid local + AI**.
 
 ## How to start the demo
 
@@ -130,11 +165,13 @@ Default behavior:
 - No automatic screenshots or video recording
 - No saved webcam images or face images
 
-External AI behavior in v1.1.3-ai:
+AI behavior in v1.2.0-ai:
 
 - Off by default.
-- Requires both **Enable External AI Analysis** and the consent checkbox.
-- Requires an OpenAI API key.
+- Requires both **Enable AI Analysis** and the consent checkbox.
+- Local Ollama mode uses the local Ollama app on this PC and does not need an
+  OpenAI key or OpenAI quota.
+- OpenAI mode requires an OpenAI API key, billing/quota, and internet access.
 - Uses cropped-face-only sending by default.
 - Never logs images, base64 data, or API keys.
 - Does not identify the user or infer sensitive traits.
@@ -200,7 +237,7 @@ Install Inno Setup 6, then run:
 The installer is generated at:
 
 ```text
-release\EmotionCam_Setup_v1.1.3_AI.exe
+release\EmotionCam_Setup_v1.2.0_AI.exe
 ```
 
 Do not commit the installer. Attach it to a GitHub Release.
@@ -234,7 +271,8 @@ python -m compileall -q app
 - `app/core/face_detector.py`: MediaPipe/OpenCV local face detection
 - `app/core/expression_backends.py`: shared classifier interface and local backends
 - `app/core/ai_client.py`: OpenAI Responses API vision client and strict JSON validation
-- `app/core/ai_agent_classifier.py`: optional external AI backend, consent checks, fallback
+- `app/core/local_ai_client.py`: Local Ollama vision client for on-PC AI analysis
+- `app/core/ai_agent_classifier.py`: optional AI provider selection, consent checks, fallback
 - `app/core/ai_rate_limiter.py`: external AI request interval control
 - `app/core/ai_settings.py`: secure API-key storage helpers
 - `app/core/expression_features.py`: normalized expression feature extraction
@@ -251,6 +289,7 @@ python -m compileall -q app
 - The app is designed for one visible user and one local webcam.
 - SMTP email summaries require user-supplied provider settings and network
   access.
-- External AI analysis requires network access, an OpenAI API key, and explicit
-  consent. It can improve estimates, but it remains approximate and may be
-  wrong.
+- Local Ollama AI requires Ollama and a local vision model installed separately.
+- OpenAI analysis requires network access, an OpenAI API key, quota, and
+  explicit consent. AI can improve estimates, but it remains approximate and
+  may be wrong.

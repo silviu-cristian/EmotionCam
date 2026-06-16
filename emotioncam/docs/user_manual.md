@@ -2,8 +2,8 @@
 
 ![EmotionCam icon](../app/assets/icon.png)
 
-**EmotionCam 1.1.0 AI-enabled**
-Local-first visible-expression estimates with optional external AI analysis
+**EmotionCam 1.2.0 AI-enabled**
+Local-first visible-expression estimates with optional Local Ollama or OpenAI AI analysis
 Updated June 16, 2026
 
 > EmotionCam estimates visible facial expressions. It does not know or
@@ -18,17 +18,22 @@ message, and recent timeline.
 
 EmotionCam can also be personalized through local calibration, run in the
 Windows tray, save metadata-only logs, show local Statistics, optionally send
-daily text summaries when explicitly enabled, and optionally use external AI
-analysis after explicit consent and API-key setup.
+daily text summaries when explicitly enabled, and optionally use AI analysis
+after explicit consent. AI providers include Local Ollama on your own computer
+and OpenAI cloud analysis.
 
 ## 2. Privacy and Safety
 
 - Webcam frames are processed locally by default.
-- External AI analysis is disabled by default and cannot send images unless the
-  user enables it, accepts the consent checkbox, and provides an OpenAI API key.
-- In External AI mode, EmotionCam sends one selected cropped face image by
-  default. Full-frame sending is available only if the user changes the setting,
-  and may include background details.
+- AI analysis is disabled by default and cannot send images unless the user
+  enables it and accepts the consent checkbox.
+- Local Ollama mode sends selected cropped face images or frames only to the
+  Ollama service running on this computer. It does not need an OpenAI API key or
+  OpenAI quota.
+- OpenAI mode sends selected cropped face images or frames to OpenAI and needs a
+  valid OpenAI API key, account quota, and internet access.
+- Cropped-face-only mode is enabled by default. Full-frame sending is available
+  only if the user changes the setting, and may include background details.
 - EmotionCam does not identify people or perform face matching.
 - There is no account system, telemetry, analytics, automatic screenshot, or
   video-recording feature.
@@ -51,7 +56,7 @@ surveillance, or lie-detection decisions.
 
 1. Open the repository Releases page.
 2. Download `EmotionCam_Setup.exe` for v1.0.0 local-only or
-   `EmotionCam_Setup_v1.1.0_AI.exe` for the AI-enabled release.
+   `EmotionCam_Setup_v1.2.0_AI.exe` for the current AI-enabled release.
 3. Run the installer.
 4. Launch EmotionCam from the Start Menu or optional desktop shortcut.
 5. Allow Windows camera access for desktop apps if prompted.
@@ -68,11 +73,12 @@ The installer is unsigned, so Windows SmartScreen may show a warning. Choose
 ### Which release to choose
 
 Choose **v1.0.0 Local-only** if privacy/offline use matters most and you do not
-want the External AI option.
+want any AI-provider option.
 
-Choose **v1.1.0-ai AI-enabled** if you want all local features plus optional
-AI-assisted visible-expression analysis and accept that enabling External AI may
-send selected cropped face images or frames to OpenAI.
+Choose **v1.2.0-ai AI-enabled** if you want all local features plus optional
+AI-assisted visible-expression analysis. Choose Local Ollama inside Settings if
+you want AI without OpenAI quota. Choose OpenAI only if you accept that selected
+cropped face images or frames may be sent to OpenAI.
 
 ### Run from source
 
@@ -95,8 +101,9 @@ notice, metadata-history checkbox, **Start Camera**, **Settings**, and **Exit**.
 
 The dashboard contains the camera preview, face rectangle, current likely
 expression, expression group, confidence, interaction message, timeline, logging
-status, privacy status, detection mode, personalized profile status, External AI
-status, Statistics, Settings, Open Logs, Run in background, and Exit controls.
+status, privacy status, detection mode, personalized profile status, AI
+provider/status, Statistics, Settings, Open Logs, Run in background, and Exit
+controls.
 
 Rectangle colors use the smoothed expression group:
 
@@ -141,31 +148,48 @@ reduce flicker. Strong negative labels require higher confidence, while
 uncertain results fall back toward neutral or unknown.
 
 Detection modes include **Local only**, **Personalized only**,
-**Personalized / Hybrid local**, **External AI only**, and **Hybrid local + AI**.
+**Personalized / Hybrid local**, **AI only**, and **Hybrid local + AI**.
 
-## 8. External AI Analysis
+## 8. AI Analysis: Local Ollama or OpenAI
 
-External AI Analysis is available in the AI-enabled release and uses the OpenAI
-vision API to estimate the visible expression in one selected image. It may help
-validate or improve local estimates, but it is still approximate and does not
-know true internal emotions.
+AI Analysis is available in the AI-enabled release. It estimates the visible
+expression in one selected image at a controlled interval. It may help validate
+or improve local estimates, but it is still approximate and does not know true
+internal emotions.
 
-External AI is **off by default**. To enable it:
+EmotionCam supports two AI providers:
+
+| Provider | Where it runs | Key needed | Privacy note |
+|---|---|---|---|
+| Local Ollama | On your own computer at `http://localhost:11434` | No OpenAI key | Sends selected images only to local Ollama |
+| OpenAI | OpenAI cloud API | OpenAI API key and quota | Sends selected images to OpenAI |
+
+AI is **off by default**. To enable Local Ollama:
 
 1. Open **Settings**.
-2. Go to **Expression Detection Mode and External AI**.
-3. Choose **External AI only** or **Hybrid local + AI**.
-4. Check **Enable External AI Analysis**.
-5. Read and accept the consent checkbox.
-6. Enter an OpenAI API key.
-7. Keep **Send cropped face only** enabled unless you intentionally want to send
-   the selected full frame.
-8. Click **Test Connection**.
-9. Save Settings.
+2. Go to **Expression Detection Mode and AI Analysis**.
+3. Choose provider **Local Ollama (runs on this computer)**.
+4. Install Ollama separately if needed, then run `ollama pull llava:7b` in
+   PowerShell.
+5. Keep endpoint `http://localhost:11434`.
+6. Keep model `llava:7b`, or enter another local vision model you installed.
+7. Click **Test Connection**.
+8. Check **Enable AI Analysis**.
+9. Read and accept the local Ollama consent checkbox.
+10. Choose **Hybrid local + AI**.
+11. Save Settings.
+
+To enable OpenAI instead:
+
+1. Choose provider **OpenAI (cloud / uses API credits)**.
+2. Enter an OpenAI API key.
+3. Click **Test Connection**.
+4. Enable AI Analysis, accept consent, choose **Hybrid local + AI**, and save.
 
 Consent is required even if the checkbox is accidentally enabled. If consent is
-missing, no request is sent. If the API key is missing, invalid, unavailable, or
-the request times out, EmotionCam falls back to local detection.
+missing, no request is sent. If Local Ollama is not running, the selected model
+is missing, the OpenAI key has no quota, or the request times out, EmotionCam
+falls back to local detection.
 
 The AI request sends only one selected image at a controlled interval. The
 default interval is 10 seconds, with a minimum of 5 seconds. It never sends every
@@ -174,9 +198,11 @@ label, group, confidence, short reason, and alternatives. EmotionCam validates
 the JSON, accepts only known labels/groups, clamps confidence to 0-1, and falls
 back to `unknown` when the result is invalid or too uncertain.
 
-What may be sent when External AI is enabled:
+What may be sent when AI is enabled:
 
-- One cropped face image by default.
+- Local Ollama: one selected cropped face image by default, sent to Ollama on
+  this computer.
+- OpenAI: one selected cropped face image by default, sent to OpenAI.
 - One selected full frame only if cropped-face-only mode is turned off.
 
 What is never sent or logged:
@@ -227,7 +253,7 @@ removed. Users now choose the target expression directly from the dropdown.
 ## 10. Settings
 
 Settings include Appearance, User Profile, Daily Email Summary, Camera and
-Detection, Expression Detection Mode and External AI, Personalized calibration,
+Detection, Expression Detection Mode and AI Analysis, Personalized calibration,
 Background, Privacy/logging, and Debug options.
 
 Use **Appearance > Theme** to switch between Dark and Light. The theme is saved
@@ -237,9 +263,9 @@ buttons, inputs, progress bars, and message areas.
 All numeric fields use spinner controls. You can type values or use the visible
 up/down arrows.
 
-External AI settings include enable/disable, consent, provider, API key,
-secure-key storage, **Test Connection**, detection mode, cropped-face-only mode,
-request interval, timeout, and AI debug info.
+AI settings include enable/disable, consent, provider, OpenAI API key fields,
+Local Ollama endpoint/model fields, **Test Connection**, detection mode,
+cropped-face-only mode, request interval, timeout, and AI debug info.
 
 ![Settings dark](screenshots/05_settings_general_dark.png)
 
@@ -320,9 +346,10 @@ are visible-expression estimates, not diagnoses.
 
 Logs are metadata-only and never include webcam frame data.
 
-AI-related log fields include `external_ai_enabled`, `ai_request_sent`,
-`ai_result_label`, `ai_result_confidence`, `ai_error`, and
-`final_result_source`. Logs never include images, base64 data, or API keys.
+AI-related log fields include `external_ai_enabled`, `ai_provider`,
+`ai_request_sent`, `ai_result_label`, `ai_result_confidence`,
+`ai_result_source`, `ai_error`, and `final_result_source`. Logs never include
+images, base64 data, or API keys.
 
 ![Logs folder](screenshots/20_logs_folder.png)
 
@@ -334,21 +361,24 @@ AI-related log fields include `external_ai_enabled`, `ai_request_sent`,
 4. Stop the camera and show `Camera stopped`.
 5. Open Settings and demonstrate spinner arrows.
 6. Switch Dark to Light and optionally back to Dark.
-7. Show **Expression Detection Mode and External AI**.
-8. Explain that AI is off by default, requires consent, requires an API key, and
-   uses cropped-face-only mode by default.
-9. Show **Test Connection** without entering a real key in public screenshots.
-10. Switch to **Hybrid local + AI** and show dashboard AI status/fallback if no
-    key is configured.
-11. Disable AI again or return to local/hybrid local mode.
-12. Open calibration and choose an expression from the dropdown.
-13. Show the local example graphic and match helper.
-14. Use Start Capture, Re-capture, Previous, Next, and Finish.
-15. Return to the dashboard and show personalized/hybrid status.
-16. Run in background and explain tray behavior.
-17. Open Statistics and show local charts.
-18. Show User Profile and disabled-by-default email summary settings.
-19. Open Logs and close the app.
+7. Show **Expression Detection Mode and AI Analysis**.
+8. Choose **Local Ollama** and explain that it runs on this computer, needs
+   Ollama plus a local vision model, and does not need OpenAI quota.
+9. Show **Test Connection**. If Ollama is not installed, explain the message and
+   the `ollama pull llava:7b` setup step.
+10. Optionally switch to **OpenAI** and explain that it requires an API key,
+    quota, internet access, and consent before any cloud request can run.
+11. Switch to **Hybrid local + AI** and show dashboard AI status/fallback if no
+    provider is ready.
+12. Disable AI again or return to local/hybrid local mode.
+13. Open calibration and choose an expression from the dropdown.
+14. Show the local example graphic and match helper.
+15. Use Start Capture, Re-capture, Previous, Next, and Finish.
+16. Return to the dashboard and show personalized/hybrid status.
+17. Run in background and explain tray behavior.
+18. Open Statistics and show local charts.
+19. Show User Profile and disabled-by-default email summary settings.
+20. Open Logs and close the app.
 
 For a presenter-ready version, open [START_DEMO_HERE.html](START_DEMO_HERE.html).
 
@@ -363,9 +393,12 @@ For a presenter-ready version, open [START_DEMO_HERE.html](START_DEMO_HERE.html)
 | Background popups do not show | Enable popups, allow Windows notifications, and wait for cooldown. |
 | Statistics are empty | Enable logging, run analysis briefly, refresh, and select a date with entries. |
 | Daily email is not sent | Confirm opt-in, valid email, SMTP settings/password, logs, send time, and network access. |
-| External AI stays off | Check that Enable External AI Analysis and consent are both enabled. |
-| External AI says missing key | Enter an API key or store one securely, then use Test Connection. |
-| External AI errors or times out | Check internet access, API key validity, rate limits, model availability, and timeout setting. Local fallback continues. |
+| AI stays off | Check that Enable AI Analysis and consent are both enabled. |
+| Local Ollama says it cannot connect | Install/start Ollama, keep endpoint `http://localhost:11434`, then click Test Connection. |
+| Local Ollama says model is missing | Run `ollama pull llava:7b`, or enter the exact local vision model you installed. |
+| OpenAI says missing key | Enter an API key or store one securely, then use Test Connection. |
+| OpenAI says insufficient quota | Add billing/credits/quota to the OpenAI project or use Local Ollama instead. |
+| AI errors or times out | Check provider setup, model availability, timeout setting, and local fallback status. |
 | Installer is blocked | Use SmartScreen **More info > Run anyway** only for a trusted file. |
 
 ## 17. Limitations
@@ -375,9 +408,10 @@ For a presenter-ready version, open [START_DEMO_HERE.html](START_DEMO_HERE.html)
 - Calibration improves estimates but cannot guarantee accuracy.
 - The app is designed for one visible user and one laptop webcam.
 - Email summaries require network access only after explicit opt-in.
-- External AI analysis requires network access and may send cropped face images
-  or selected frames when explicitly enabled.
-- External AI may improve visible-expression estimates but can still be wrong.
+- Local Ollama AI requires Ollama and a local vision model installed separately.
+- OpenAI analysis requires network access, an API key, quota, and explicit
+  consent before it can send selected cropped face images or frames.
+- AI may improve visible-expression estimates but can still be wrong.
 
 ## 18. Uninstall and Data Removal
 

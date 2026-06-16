@@ -275,7 +275,7 @@ def static_card(name, title, lines):
 
 def ai_settings(name, enabled=False, consent=False, mode="Local only"):
     image, draw, c = base("dark")
-    draw.text((50, 38), "Settings > Expression Detection Mode and External AI", fill=c["text"], font=F_TITLE)
+    draw.text((50, 38), "Settings > Expression Detection Mode and AI Analysis", fill=c["text"], font=F_TITLE)
     panel(draw, (50, 105, 1230, 705), c)
     draw_wrapped(
         draw,

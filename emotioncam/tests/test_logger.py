@@ -17,11 +17,13 @@ def test_metadata_only_logging(tmp_path):
             "classifier_source": "personalized",
             "personalized_profile_active": True,
             "external_ai_enabled": True,
+            "ai_provider": "ollama",
             "ai_request_sent": True,
             "ai_result_label": "happy",
             "ai_result_confidence": 0.8,
+            "ai_result_source": "local_ai",
             "ai_error": "",
-            "final_result_source": "external_ai",
+            "final_result_source": "local_ai",
         },
         "Smile detected :)",
         24.8,
@@ -36,9 +38,11 @@ def test_metadata_only_logging(tmp_path):
     assert entry["classifier_source"] == "personalized"
     assert entry["personalized_profile_active"] is True
     assert entry["external_ai_enabled"] is True
+    assert entry["ai_provider"] == "ollama"
     assert entry["ai_request_sent"] is True
     assert entry["ai_result_label"] == "happy"
-    assert entry["final_result_source"] == "external_ai"
+    assert entry["ai_result_source"] == "local_ai"
+    assert entry["final_result_source"] == "local_ai"
 
 
 def test_disabled_logger_creates_nothing(tmp_path):

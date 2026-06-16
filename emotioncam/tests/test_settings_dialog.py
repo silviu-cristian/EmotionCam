@@ -105,3 +105,24 @@ def test_ai_test_button_emits_values_and_disables_until_result():
     assert "Connection failed" in dialog.ai_test_status.text()
     dialog.close()
     assert application is not None
+
+
+def test_local_ollama_provider_shows_local_fields_and_no_key_requirement():
+    application = QApplication.instance() or QApplication([])
+    dialog = SettingsDialog({**DEFAULT_CONFIG, "external_ai_provider": "ollama"})
+    dialog.ai_provider.setCurrentIndex(dialog.ai_provider.findData("ollama"))
+
+    assert dialog.ai_key.isEnabled() is False
+    assert dialog.ai_store_key.isEnabled() is False
+    assert dialog.ollama_endpoint.isEnabled() is True
+    assert dialog.ollama_model.isEnabled() is True
+    assert "local Ollama" in dialog.external_ai_consent.text()
+    values = dialog.ai_values()
+    assert values["external_ai_provider"] == "ollama"
+    assert values["local_ai_ollama_endpoint"]
+    assert values["local_ai_ollama_model"]
+
+    dialog.set_ai_test_running()
+    assert "Local Ollama" in dialog.ai_test_status.text()
+    dialog.close()
+    assert application is not None

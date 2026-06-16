@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.2.0-ai - 2026-06-16
+
+- Added optional **Local Ollama AI** provider for visible-expression estimates
+  running on the user's own PC.
+- Kept OpenAI as an optional cloud/external provider, still disabled by default
+  and still requiring explicit consent plus a valid API key.
+- Added Local Ollama settings for endpoint and vision model, defaulting to
+  `http://localhost:11434` and `llava:7b`.
+- Added loopback-only endpoint validation so Local Ollama mode cannot
+  accidentally send frames to a remote server.
+- Updated Test Connection to test either OpenAI or Local Ollama and report
+  missing Ollama/model setup clearly.
+- Added provider/source metadata to logs without logging images, base64 data, or
+  API keys.
+- Added tests for Local Ollama provider selection, endpoint validation, response
+  parsing, and no-face/no-upload behavior.
+
 ## 1.1.3-ai - 2026-06-16
 
 - Added clear Settings-dialog feedback for External AI Test Connection.
