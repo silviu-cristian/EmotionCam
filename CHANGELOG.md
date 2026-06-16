@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.2-ai - 2026-06-16
+
+- Improved Windows camera startup reliability by trying DirectShow, Media
+  Foundation, and OpenCV automatic camera backends instead of one backend only.
+- Added fallback scanning of nearby camera indexes when the configured index
+  cannot be opened.
+- Verified the camera can actually return frames before starting analysis.
+- Improved camera error guidance for Windows camera privacy settings,
+  antivirus privacy blocking, and apps that may already be using the webcam.
+- Added tests for camera backend fallback behavior.
+
 ## 1.1.1-ai - 2026-06-16
 
 - Fixed External AI activation so enabling External AI automatically selects

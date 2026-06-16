@@ -64,7 +64,7 @@ Uninstall from **Windows Settings > Apps > Installed apps > EmotionCam**.
 - Best for privacy-focused and offline use.
 - Download asset: `EmotionCam_Setup.exe`.
 
-### v1.1.1-ai - Recommended AI-enabled release
+### v1.1.2-ai - Recommended AI-enabled release
 
 - Keeps the local heuristic, personalized, and hybrid classifiers.
 - Adds optional **External AI Analysis** using OpenAI vision.
@@ -75,6 +75,11 @@ Uninstall from **Windows Settings > Apps > Installed apps > EmotionCam**.
   background details may be included.
 - Falls back to local detection when the API key is missing, consent is missing,
   no face is found, the request times out, or the API fails.
+- Includes the camera-opening hotfix for Windows webcam backend fallback.
+- Download asset: `EmotionCam_Setup_v1.1.2_AI.exe`.
+
+### v1.1.1-ai - Earlier AI-enabled hotfix
+
 - Includes the AI-mode activation hotfix so enabling External AI selects
   Hybrid local + AI mode automatically.
 - Download asset: `EmotionCam_Setup_v1.1.1_AI.exe`.
@@ -82,13 +87,13 @@ Uninstall from **Windows Settings > Apps > Installed apps > EmotionCam**.
 ### v1.1.0-ai - Earlier AI-enabled release
 
 - First AI-enabled release.
-- Kept available for history, but `v1.1.1-ai` is recommended.
+- Kept available for history, but `v1.1.2-ai` is recommended.
 
 ## Which version should I download?
 
 Choose **v1.0.0 Local-only** if privacy/offline use matters most.
 
-Choose **v1.1.1-ai AI-enabled** if you want optional stronger AI-assisted
+Choose **v1.1.2-ai AI-enabled** if you want optional stronger AI-assisted
 visible-expression analysis and accept that enabling External AI may send
 selected cropped face images or frames to OpenAI.
 
@@ -118,7 +123,7 @@ Default behavior:
 - No automatic screenshots or video recording
 - No saved webcam images or face images
 
-External AI behavior in v1.1.1-ai:
+External AI behavior in v1.1.2-ai:
 
 - Off by default.
 - Requires both **Enable External AI Analysis** and the consent checkbox.
@@ -188,7 +193,7 @@ Install Inno Setup 6, then run:
 The installer is generated at:
 
 ```text
-release\EmotionCam_Setup_v1.1.1_AI.exe
+release\EmotionCam_Setup_v1.1.2_AI.exe
 ```
 
 Do not commit the installer. Attach it to a GitHub Release.

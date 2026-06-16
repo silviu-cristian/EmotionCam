@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "emotioncam"
-version = "1.1.1"
+version = "1.1.2"
 description = "Privacy-first Windows desktop app for visible-expression estimates with optional external AI"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
