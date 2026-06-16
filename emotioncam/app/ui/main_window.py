@@ -271,8 +271,11 @@ class MainWindow(QMainWindow):
         )
         active = result.get("personalized_profile_active", ExpressionProfile().exists)
         self.profile_label.setText(f"Personalized profile: {'active' if active else 'inactive'}")
+        mode = result.get("detection_mode", self.config.data["expression_detection_mode"])
         ai_enabled = bool(result.get("external_ai_enabled", self.config.data["external_ai_enabled"]))
         ai_status = result.get("ai_status", "Off")
+        if ai_enabled and mode not in {"external_ai", "hybrid_ai"}:
+            ai_status = "Enabled in settings, inactive in current detection mode"
         self.ai_status_label.setText(f"External AI: {'enabled' if ai_enabled else 'off'} | {ai_status}")
         ai_result = result.get("ai_result_label", "")
         ai_confidence = float(result.get("ai_result_confidence", 0.0) or 0.0)

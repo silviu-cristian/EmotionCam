@@ -50,6 +50,21 @@ def test_api_key_is_not_saved_in_plain_config(tmp_path):
     assert "external_ai_api_key" not in saved
 
 
+def test_enabled_external_ai_migrates_hybrid_mode_to_hybrid_ai(tmp_path):
+    path = tmp_path / "config.json"
+    path.write_text(
+        json.dumps(
+            {
+                "expression_detection_mode": "hybrid",
+                "external_ai_enabled": True,
+                "external_ai_consent_accepted": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert ConfigManager(path).data["expression_detection_mode"] == "hybrid_ai"
+
+
 def test_invalid_theme_falls_back_to_dark(tmp_path):
     path = tmp_path / "config.json"
     path.write_text('{"theme": "invisible"}', encoding="utf-8")

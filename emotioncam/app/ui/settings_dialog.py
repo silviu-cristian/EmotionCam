@@ -232,6 +232,8 @@ class SettingsDialog(QDialog):
         test_ai.clicked.connect(lambda: self.test_ai_requested.emit(self.ai_values()))
         ai_layout.addWidget(test_ai)
         content_layout.addWidget(ai_group)
+        self.external_ai_enabled.toggled.connect(self._sync_external_ai_mode)
+        self.detection_mode.currentIndexChanged.connect(self._sync_external_ai_checkbox)
 
         personalized = QGroupBox("Personalized expression calibration")
         personalized_layout = QVBoxLayout(personalized)
@@ -345,6 +347,35 @@ class SettingsDialog(QDialog):
         box.setFocusPolicy(Qt.StrongFocus)
         box.setMinimumWidth(150)
         box.setMaximumWidth(190)
+
+    def _set_detection_mode(self, mode: str) -> None:
+        index = self.detection_mode.findData(mode)
+        if index < 0:
+            return
+        was_blocked = self.detection_mode.blockSignals(True)
+        self.detection_mode.setCurrentIndex(index)
+        self.detection_mode.blockSignals(was_blocked)
+
+    def _set_external_ai_enabled(self, enabled: bool) -> None:
+        was_blocked = self.external_ai_enabled.blockSignals(True)
+        self.external_ai_enabled.setChecked(enabled)
+        self.external_ai_enabled.blockSignals(was_blocked)
+
+    def _sync_external_ai_mode(self, enabled: bool) -> None:
+        mode = self.detection_mode.currentData()
+        if enabled and mode not in {"external_ai", "hybrid_ai"}:
+            self._set_detection_mode("hybrid_ai")
+        elif not enabled and mode == "hybrid_ai":
+            self._set_detection_mode("hybrid")
+        elif not enabled and mode == "external_ai":
+            self._set_detection_mode("heuristic")
+
+    def _sync_external_ai_checkbox(self) -> None:
+        mode = self.detection_mode.currentData()
+        if mode in {"external_ai", "hybrid_ai"}:
+            self._set_external_ai_enabled(True)
+        elif self.external_ai_enabled.isChecked():
+            self._set_external_ai_enabled(False)
 
     def _load(self, data: dict) -> None:
         theme_index = self.theme.findData(data.get("theme", "dark"))

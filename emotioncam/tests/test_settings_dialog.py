@@ -50,3 +50,23 @@ def test_external_ai_controls_exist_and_do_not_expose_key():
     assert "external_ai_api_key" in ai_values
     dialog.close()
     assert application is not None
+
+
+def test_enabling_external_ai_selects_hybrid_ai_mode():
+    application = QApplication.instance() or QApplication([])
+    dialog = SettingsDialog(DEFAULT_CONFIG)
+    dialog.external_ai_enabled.setChecked(True)
+    assert dialog.detection_mode.currentData() == "hybrid_ai"
+    assert dialog.values()["expression_detection_mode"] == "hybrid_ai"
+    dialog.close()
+    assert application is not None
+
+
+def test_local_mode_disables_external_ai_checkbox():
+    application = QApplication.instance() or QApplication([])
+    dialog = SettingsDialog({**DEFAULT_CONFIG, "external_ai_enabled": True, "expression_detection_mode": "hybrid_ai"})
+    dialog.detection_mode.setCurrentIndex(dialog.detection_mode.findData("hybrid"))
+    assert dialog.external_ai_enabled.isChecked() is False
+    assert dialog.values()["expression_detection_mode"] == "hybrid"
+    dialog.close()
+    assert application is not None
