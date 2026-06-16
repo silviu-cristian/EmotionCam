@@ -37,6 +37,8 @@ def main() -> int:
         "--collect-binaries",
         "mediapipe",
         "--hidden-import",
+        "openai",
+        "--hidden-import",
         "mediapipe.tasks.python.vision.face_landmarker",
         str(ROOT / "app" / "main.py"),
     ]

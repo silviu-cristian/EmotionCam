@@ -7,7 +7,8 @@ This is the fastest guide for presenting EmotionCam.
 1. Open EmotionCam.
 2. Select **Help > Start Demo Guide** to reopen this page.
 3. Keep raw calibration image storage off.
-4. Use the scripted flow below.
+4. Do not type or display a real API key during a public demo.
+5. Use the scripted flow below.
 
 ## Demo Flow
 
@@ -18,16 +19,23 @@ This is the fastest guide for presenting EmotionCam.
 4. Stop the camera and show the black `Camera stopped` preview.
 5. Open Settings and demonstrate the visible numeric up/down arrows.
 6. Switch to Light theme, save, and optionally switch back to Dark.
-7. Open calibration.
-8. Select an expression from the dropdown.
-9. Show the local example graphic and match helper.
-10. Click **Start Capture**, then show sample progress and quality.
-11. Use **Re-capture**, **Previous**, and **Next**.
-12. Finish calibration and return to the dashboard.
-13. Open Statistics and show local daily/weekly charts.
-14. Show optional User Profile and disabled-by-default Daily Email Summary.
-15. Run in background and explain tray behavior.
-16. Open logs and close the app.
+7. Show **Expression Detection Mode and External AI**.
+8. Explain AI is off by default and requires consent plus an OpenAI API key.
+9. Show **Send cropped face only** and **Test Connection** without displaying a
+   real key.
+10. Switch to **Hybrid local + AI** and show the dashboard AI status/fallback
+   behavior if no key is configured.
+11. Disable AI again or return to local/hybrid local mode.
+12. Open calibration.
+13. Select an expression from the dropdown.
+14. Show the local example graphic and match helper.
+15. Click **Start Capture**, then show sample progress and quality.
+16. Use **Re-capture**, **Previous**, and **Next**.
+17. Finish calibration and return to the dashboard.
+18. Open Statistics and show local daily/weekly charts.
+19. Show optional User Profile and disabled-by-default Daily Email Summary.
+20. Run in background and explain tray behavior.
+21. Open logs and close the app.
 
 ## Demo Screens
 
@@ -39,6 +47,8 @@ This is the fastest guide for presenting EmotionCam.
 - `screenshots/09_calibration_overview.png`
 - `screenshots/13_statistics_overview.png`
 - `screenshots/19_background_mode_tray.png`
+- `screenshots/23_external_ai_settings_disabled.png`
+- `screenshots/26_dashboard_ai_status.png`
 
 ## Demo-Day Tips
 
@@ -48,3 +58,5 @@ This is the fastest guide for presenting EmotionCam.
 - Do not force negative expressions for a popup demo; explain the behavior.
 - Use the generated documentation screenshots when you need a camera-free,
   public-safe version of the demo.
+- Never show a real OpenAI API key. Use the masked placeholder screenshots for
+  the AI portion of the demo.

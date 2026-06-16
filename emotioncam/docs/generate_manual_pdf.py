@@ -33,8 +33,8 @@ story = [
     Image(str(ICON), width=1.35 * inch, height=1.35 * inch),
     Spacer(1, 0.2 * inch),
     Paragraph("EmotionCam User Manual", styles["CoverTitle"]),
-    Paragraph("Local visible-expression estimates with privacy-first personalized calibration", styles["CoverSub"]),
-    Paragraph("Version 1.0.0 | Updated June 16, 2026", styles["CoverSub"]),
+    Paragraph("Local-first visible-expression estimates with optional external AI analysis", styles["CoverSub"]),
+    Paragraph("Version 1.1.0 AI-enabled | Updated June 16, 2026", styles["CoverSub"]),
     PageBreak(),
 ]
 

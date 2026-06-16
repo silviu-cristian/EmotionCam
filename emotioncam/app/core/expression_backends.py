@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 from typing import Any
 
+from .ai_privacy import AI_PRIVACY_WARNING
 from .expression_classifier import ExpressionClassifier, NEGATIVE_LABELS
 from .expression_features import extract_expression_features, feature_distance
 from .expression_profile import ExpressionProfile
@@ -109,10 +110,7 @@ class HybridExpressionClassifier(BaseExpressionClassifier):
 
 
 class ExternalAIAgentExpressionClassifier(BaseExpressionClassifier):
-    PRIVACY_WARNING = (
-        "External AI agent analysis is not enabled. This would require explicitly sending "
-        "images outside the app, so it is disabled by default."
-    )
+    PRIVACY_WARNING = AI_PRIVACY_WARNING
 
     def classify(self, frame: Any, face_box=None, landmarks=None) -> ExpressionResult:
         return ExpressionResult("unknown", "neutral", 0.0, {}, "external_ai_disabled",

@@ -16,15 +16,15 @@ a{color:#1766bd}.note{border-left:5px solid #f1a340;background:#fff7e8;padding:1
 </style>
 </head>
 <body>
-<header><div class="hero"><img src="../app/assets/icon.png" alt="EmotionCam icon"><div><h1>Start the EmotionCam Demo Here</h1><p class="tag">Offline presenter guide for EmotionCam 1.0.0</p><p>Visible-expression estimates, local processing, personalized calibration, Statistics, and privacy-first defaults.</p></div></div></header>
+<header><div class="hero"><img src="../app/assets/icon.png" alt="EmotionCam icon"><div><h1>Start the EmotionCam Demo Here</h1><p class="tag">Offline presenter guide for EmotionCam v1.1.0-ai</p><p>Visible-expression estimates, local-first processing, optional External AI, personalized calibration, Statistics, and privacy-first defaults.</p></div></div></header>
 <main class="wrap">
-<div class="note"><strong>Before presenting:</strong> close other webcam apps, allow Windows camera access, use steady lighting, and keep raw calibration image storage off.</div>
+<div class="note"><strong>Before presenting:</strong> close other webcam apps, allow Windows camera access, use steady lighting, keep raw calibration image storage off, and never show a real API key.</div>
 <h2>Quick Start</h2>
 <div class="grid">
 <section class="card"><h3>1. Open EmotionCam</h3><p>Show the final icon, startup privacy copy, and metadata-history choice.</p></section>
-<section class="card"><h3>2. Start the camera</h3><p>Show visible-expression estimates. Explain that screenshots here use a demo avatar rather than real webcam frames.</p></section>
-<section class="card"><h3>3. Show Settings</h3><p>Demonstrate visible spinner arrows and switch from Dark to Light theme.</p></section>
-<section class="card"><h3>4. Show Calibration and Statistics</h3><p>Use dropdown calibration, local example graphics, match helper, then show local Statistics charts.</p></section>
+<section class="card"><h3>2. Start the camera</h3><p>Explain visible-expression estimates. Public screenshots use a demo avatar instead of real webcam frames.</p></section>
+<section class="card"><h3>3. Show Settings</h3><p>Demonstrate visible spinner arrows, switch Dark/Light theme, then open External AI settings.</p></section>
+<section class="card"><h3>4. Explain AI mode</h3><p>Show External AI is off by default, requires consent and an API key, uses cropped-face-only by default, and falls back locally.</p></section>
 </div>
 <h2>Demo Flow</h2>
 <section class="card">
@@ -33,23 +33,28 @@ a{color:#1766bd}.note{border-left:5px solid #f1a340;background:#fff7e8;padding:1
 <div class="step"><span class="n">3</span><div>Smile and point out the blue positive-group rectangle.</div></div>
 <div class="step"><span class="n">4</span><div>Click <strong>Stop Camera</strong>; show <code>Camera stopped</code>.</div></div>
 <div class="step"><span class="n">5</span><div>Open Settings; click spinner arrows and switch Dark/Light theme.</div></div>
-<div class="step"><span class="n">6</span><div>Open calibration; use dropdown, example graphic, match helper, Start Capture, Re-capture, Previous, Next, and Finish.</div></div>
-<div class="step"><span class="n">7</span><div>Open Statistics; show today balance, weekly balance, and label counts.</div></div>
-<div class="step"><span class="n">8</span><div>Show optional user profile and disabled-by-default text-only email summaries.</div></div>
-<div class="step"><span class="n">9</span><div>Run in background, explain tray behavior, open logs, and exit.</div></div>
+<div class="step"><span class="n">6</span><div>Show <strong>Expression Detection Mode and External AI</strong>. Explain AI is off by default.</div></div>
+<div class="step"><span class="n">7</span><div>Point to the consent checkbox, cropped-face-only setting, masked API key field, and Test Connection button. Do not enter a real key on screen.</div></div>
+<div class="step"><span class="n">8</span><div>Select <strong>Hybrid local + AI</strong>; show dashboard AI status and missing-key/local-fallback behavior.</div></div>
+<div class="step"><span class="n">9</span><div>Open calibration; use dropdown, example graphic, match helper, Start Capture, Re-capture, Previous, Next, and Finish.</div></div>
+<div class="step"><span class="n">10</span><div>Open Statistics; show today balance, weekly balance, and label counts.</div></div>
+<div class="step"><span class="n">11</span><div>Show optional user profile and disabled-by-default text-only email summaries.</div></div>
+<div class="step"><span class="n">12</span><div>Run in background, explain tray behavior, open logs, and exit.</div></div>
 </section>
 <h2>Key Screens</h2>
 <div class="grid">
 <img class="shot" src="screenshots/01_startup_screen.png" alt="Startup screen">
 <img class="shot" src="screenshots/02_main_dashboard_dark_theme.png" alt="Dark dashboard">
 <img class="shot" src="screenshots/07_settings_numeric_arrows.png" alt="Numeric arrows">
+<img class="shot" src="screenshots/23_external_ai_settings_disabled.png" alt="External AI off">
+<img class="shot" src="screenshots/26_dashboard_ai_status.png" alt="Dashboard AI status">
 <img class="shot" src="screenshots/09_calibration_overview.png" alt="Calibration">
 <img class="shot" src="screenshots/13_statistics_overview.png" alt="Statistics">
 <img class="shot" src="screenshots/19_background_mode_tray.png" alt="Background mode">
 </div>
 <h2>Presenter Materials</h2>
-<section class="card"><p><a href="demo_script.md">Detailed presenter script</a> · <a href="user_manual.html">User manual</a> · <a href="screenshot_checklist.md">Screenshot checklist</a></p></section>
+<section class="card"><p><a href="demo_script.md">Detailed presenter script</a> | <a href="user_manual.html">User manual</a> | <a href="screenshot_checklist.md">Screenshot checklist</a></p></section>
 <h2>Troubleshooting</h2>
-<section class="card"><ul><li>Camera unavailable: close Camera/Teams/Zoom/browser calls and verify Windows camera permissions.</li><li>No face or poor calibration quality: improve lighting and hold still.</li><li>No tray: EmotionCam minimizes to the taskbar as a fallback.</li><li>Do not force negative expressions for a popup demo; explain cooldown behavior instead.</li></ul></section>
+<section class="card"><ul><li>Camera unavailable: close Camera/Teams/Zoom/browser calls and verify Windows camera permissions.</li><li>No face or poor calibration quality: improve lighting and hold still.</li><li>External AI unavailable: explain that it needs consent, an OpenAI API key, internet, and a successful Test Connection. Local fallback still works.</li><li>No tray: EmotionCam minimizes to the taskbar as a fallback.</li><li>Do not force negative expressions for a popup demo; explain cooldown behavior instead.</li></ul></section>
 </main>
 </body></html>

@@ -21,6 +21,12 @@ ALLOWED_FIELDS = (
     "face_detected",
     "message_displayed",
     "popup_displayed",
+    "external_ai_enabled",
+    "ai_request_sent",
+    "ai_result_label",
+    "ai_result_confidence",
+    "ai_error",
+    "final_result_source",
     "fps",
 )
 
@@ -47,6 +53,12 @@ class ExpressionLogger:
             "face_detected": bool(result.get("face_detected", False)),
             "message_displayed": str(message),
             "popup_displayed": str(popup),
+            "external_ai_enabled": bool(result.get("external_ai_enabled", False)),
+            "ai_request_sent": bool(result.get("ai_request_sent", False)),
+            "ai_result_label": str(result.get("ai_result_label", "")),
+            "ai_result_confidence": round(float(result.get("ai_result_confidence", 0.0)), 3),
+            "ai_error": str(result.get("ai_error", ""))[:120],
+            "final_result_source": str(result.get("final_result_source", result.get("classifier_source", ""))),
             "fps": round(float(fps), 1),
         }
         with self.path.open("a", encoding="utf-8") as stream:

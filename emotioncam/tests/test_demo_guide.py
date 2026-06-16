@@ -34,6 +34,11 @@ def test_release_docs_use_current_screenshots_and_releases():
         "18_daily_email_summary_settings.png",
         "19_background_mode_tray.png",
         "20_logs_folder.png",
+        "23_external_ai_settings_disabled.png",
+        "24_external_ai_consent_warning.png",
+        "25_external_ai_settings_enabled_no_key.png",
+        "26_dashboard_ai_status.png",
+        "27_dashboard_hybrid_local_ai_mode.png",
     }
     screenshots = {path.name for path in (ROOT / "docs" / "screenshots").glob("*.png")}
     assert required <= screenshots
@@ -44,4 +49,19 @@ def test_release_docs_use_current_screenshots_and_releases():
         assert old_name not in demo
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "GitHub Releases" in readme
-    assert "EmotionCam_Setup.exe" in readme
+    assert "EmotionCam_Setup_v1.1.0_AI.exe" in readme
+
+
+def test_docs_do_not_contain_real_api_keys():
+    docs = [
+        ROOT / "README.md",
+        ROOT / "docs" / "user_manual.md",
+        ROOT / "docs" / "user_manual.html",
+        ROOT / "docs" / "START_DEMO_HERE.md",
+        ROOT / "docs" / "START_DEMO_HERE.html",
+        ROOT / "docs" / "demo_script.md",
+    ]
+    text = "\n".join(path.read_text(encoding="utf-8") for path in docs)
+    assert "sk-test" not in text
+    assert "sk-proj-" not in text
+    assert "sk-" not in text
