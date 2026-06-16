@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "emotioncam"
+version = "1.0.0"
+description = "Local-only approximate facial-expression desktop app for Windows"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "PySide6>=6.7,<7",
+  "opencv-contrib-python>=4.10,<5",
+  "mediapipe>=0.10.21,<0.11",
+  "matplotlib>=3.9,<4",
+  "keyring>=25,<26",
+]
+
+[project.scripts]
+emotioncam = "app.main:main"
+
+[tool.setuptools]
+packages = ["app", "app.core", "app.ui"]
+
+[tool.setuptools.package-data]
+app = ["assets/*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
