@@ -1,0 +1,22 @@
+{
+  "neutral": {"eyes":"open","brows":"level","mouth":"flat","accent":"gray"},
+  "smile_small": {"eyes":"open","brows":"level","mouth":"smile_small","accent":"blue"},
+  "smile_big": {"eyes":"happy","brows":"level","mouth":"smile_big","accent":"blue"},
+  "happy": {"eyes":"happy","brows":"raised","mouth":"smile_big","accent":"blue"},
+  "laughing": {"eyes":"happy","brows":"raised","mouth":"open_smile","accent":"blue"},
+  "amused": {"eyes":"squint","brows":"asymmetric","mouth":"smile_small","accent":"blue"},
+  "surprised": {"eyes":"wide","brows":"raised","mouth":"open","accent":"blue"},
+  "sad": {"eyes":"open","brows":"inner_up","mouth":"frown","accent":"orange"},
+  "angry": {"eyes":"squint","brows":"furrow","mouth":"flat","accent":"orange"},
+  "fearful": {"eyes":"wide","brows":"inner_up","mouth":"open","accent":"orange"},
+  "disgusted": {"eyes":"squint","brows":"furrow","mouth":"asymmetric","accent":"orange"},
+  "tired": {"eyes":"tired","brows":"level","mouth":"flat","accent":"orange"},
+  "bored": {"eyes":"tired","brows":"level","mouth":"flat","accent":"orange"},
+  "frustrated": {"eyes":"squint","brows":"furrow","mouth":"frown","accent":"orange"},
+  "concerned": {"eyes":"open","brows":"inner_up","mouth":"frown","accent":"orange"},
+  "focused": {"eyes":"squint","brows":"furrow","mouth":"flat","accent":"gray"},
+  "confused": {"eyes":"open","brows":"asymmetric","mouth":"asymmetric","accent":"gray"},
+  "skeptical": {"eyes":"squint","brows":"asymmetric","mouth":"asymmetric","accent":"gray"},
+  "thinking": {"eyes":"side","brows":"asymmetric","mouth":"flat","accent":"gray"},
+  "relaxed": {"eyes":"soft","brows":"level","mouth":"smile_small","accent":"gray"}
+}
