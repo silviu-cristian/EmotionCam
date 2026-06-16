@@ -1,39 +1,50 @@
 # Start the EmotionCam Demo Here
 
+This is the fastest guide for presenting EmotionCam.
+
 ## Quick Start
 
 1. Open EmotionCam.
-2. Select **Help > Start Demo Guide** to reopen this offline guide at any time.
-3. Keep the default Dark theme, enable local logging if logs will be demonstrated, and click **Start Camera**.
-4. Follow the checklist below.
+2. Select **Help > Start Demo Guide** to reopen this page.
+3. Keep raw calibration image storage off.
+4. Use the scripted flow below.
 
-## Demo Checklist
+## Demo Flow
 
-- Show the simplified smiling camera-lens icon and privacy-first startup screen.
-- Start the camera; show a neutral estimate and then a positive estimate with a blue rectangle.
-- Stop the camera; show the black `Camera stopped` screen.
-- Open Settings; click visible numeric spinner arrows and type a value.
-- Switch to Light theme and save; optionally switch back to Dark.
-- Open calibration; use the dropdown, example graphic, match helper, Start Capture, Re-capture, Previous, Next, and Finish.
-- Explain that Skip and the separate Label Unknown Expression flow were removed.
-- Return to the dashboard and show Hybrid/personalized profile status.
-- Run in background and explain safe cooldown-controlled popups.
-- Open Statistics and show local selected-day / last-7-days charts.
-- Show optional User Profile and Daily Email Summary settings; explain that email is off by default.
-- Open metadata-only logs, then exit fully.
+1. Show the final smiling camera-lens icon and startup privacy notice.
+2. Start the camera and explain that estimates are visible-expression estimates,
+   not true-emotion claims.
+3. Smile and point out the blue positive-group rectangle.
+4. Stop the camera and show the black `Camera stopped` preview.
+5. Open Settings and demonstrate the visible numeric up/down arrows.
+6. Switch to Light theme, save, and optionally switch back to Dark.
+7. Open calibration.
+8. Select an expression from the dropdown.
+9. Show the local example graphic and match helper.
+10. Click **Start Capture**, then show sample progress and quality.
+11. Use **Re-capture**, **Previous**, and **Next**.
+12. Finish calibration and return to the dashboard.
+13. Open Statistics and show local daily/weekly charts.
+14. Show optional User Profile and disabled-by-default Daily Email Summary.
+15. Run in background and explain tray behavior.
+16. Open logs and close the app.
 
-## Presenter Materials
+## Demo Screens
 
-- [Polished offline demo page](START_DEMO_HERE.html)
-- [Presenter script](demo_script.md)
-- [Full user manual](user_manual.html)
-- [Screenshot checklist](screenshot_checklist.md)
+- `screenshots/01_startup_screen.png`
+- `screenshots/02_main_dashboard_dark_theme.png`
+- `screenshots/03_main_dashboard_light_theme.png`
+- `screenshots/04_camera_stopped_screen.png`
+- `screenshots/07_settings_numeric_arrows.png`
+- `screenshots/09_calibration_overview.png`
+- `screenshots/13_statistics_overview.png`
+- `screenshots/19_background_mode_tray.png`
 
-## Demo-Day Troubleshooting
+## Demo-Day Tips
 
-- Close all other webcam applications.
+- Close Camera, Teams, Zoom, browsers, and other webcam apps.
 - Allow Windows desktop-app camera access.
-- Use steady front lighting and keep one face visible.
-- If calibration rejects samples, hold still and reduce head rotation.
-- If the tray is unavailable, EmotionCam minimizes to the taskbar.
-- If arrows or themes look unchanged, close any old build and launch the newly built app.
+- Use steady front lighting.
+- Do not force negative expressions for a popup demo; explain the behavior.
+- Use the generated documentation screenshots when you need a camera-free,
+  public-safe version of the demo.

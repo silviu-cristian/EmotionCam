@@ -8,6 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
+DIST_PATH = ROOT / "release" / "app"
 
 
 def main() -> int:
@@ -19,6 +20,8 @@ def main() -> int:
         "--clean",
         "--windowed",
         "--onedir",
+        "--distpath",
+        str(DIST_PATH),
         "--name",
         "EmotionCam",
         "--icon",

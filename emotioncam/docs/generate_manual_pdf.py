@@ -34,7 +34,7 @@ story = [
     Spacer(1, 0.2 * inch),
     Paragraph("EmotionCam User Manual", styles["CoverTitle"]),
     Paragraph("Local visible-expression estimates with privacy-first personalized calibration", styles["CoverSub"]),
-    Paragraph("Version 1.0.0 | Updated June 15, 2026", styles["CoverSub"]),
+    Paragraph("Version 1.0.0 | Updated June 16, 2026", styles["CoverSub"]),
     PageBreak(),
 ]
 

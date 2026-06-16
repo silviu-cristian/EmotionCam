@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+build/
+dist/
+*.spec
+installer/output/
+emotioncam/release/app/
+emotioncam/release/*.exe
+emotioncam/release/*.zip
+release/*.exe
+release/*.zip
+fontlist-v*.json
+*.log
+
+# Local EmotionCam data must never be committed if copied into the repo root.
+/logs/
+/profile/
+/config.json
+/user_profile.json
+/expression_profile.json
+/debug_images/

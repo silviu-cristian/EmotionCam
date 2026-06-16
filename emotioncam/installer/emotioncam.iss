@@ -9,8 +9,8 @@ AppVersion={#MyAppVersion}
 DefaultDirName={localappdata}\Programs\EmotionCam
 DefaultGroupName=EmotionCam
 PrivilegesRequired=lowest
-OutputDir=output
-OutputBaseFilename=EmotionCam-Setup-{#MyAppVersion}
+OutputDir=..\release
+OutputBaseFilename=EmotionCam_Setup
 SetupIconFile=..\app\assets\icon.ico
 Compression=lzma2
 SolidCompression=yes
@@ -21,7 +21,7 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 LicenseFile=..\README.md
 
 [Files]
-Source: "..\dist\EmotionCam\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\release\app\EmotionCam\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\EmotionCam"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"

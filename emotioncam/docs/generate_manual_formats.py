@@ -73,7 +73,7 @@ def add_cover(document: Document) -> None:
     run.italic = True
     run.font.size = Pt(14)
     run.font.color.rgb = RGBColor.from_string("52687C")
-    date = document.add_paragraph("Version 1.0.0 | Updated June 15, 2026")
+    date = document.add_paragraph("Version 1.0.0 | Updated June 16, 2026")
     date.alignment = WD_ALIGN_PARAGRAPH.CENTER
     document.add_page_break()
 

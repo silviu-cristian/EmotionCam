@@ -8,3 +8,12 @@ dist/
 *.spec
 installer/output/
 fontlist-v*.json
+release/app/
+release/*.exe
+release/*.zip
+logs/
+profile/
+config.json
+user_profile.json
+expression_profile.json
+debug_images/

@@ -5,57 +5,51 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Start the EmotionCam Demo</title>
 <style>
-:root{color-scheme:light;--ink:#182236;--muted:#5d6b80;--blue:#2878d7;--panel:#fff;--line:#d7deea;--bg:#f3f6fa}
+:root{--ink:#182236;--muted:#5d6b80;--blue:#2878d7;--panel:#fff;--line:#d7deea;--bg:#f3f6fa}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",Arial,sans-serif}
-header{background:linear-gradient(135deg,#111722,#20334f);color:#fff;padding:42px 24px}.hero{max-width:1050px;margin:auto;display:flex;gap:24px;align-items:center}
-header img{width:112px;height:112px;border-radius:24px}.tag{color:#b9d7ff}.wrap{max-width:1050px;margin:28px auto;padding:0 20px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 8px 24px #19304d12}
+header{background:linear-gradient(135deg,#111722,#20334f);color:#fff;padding:42px 24px}.hero{max-width:1100px;margin:auto;display:flex;gap:24px;align-items:center}
+header img{width:112px;height:112px;border-radius:24px}.tag{color:#b9d7ff}.wrap{max-width:1100px;margin:28px auto;padding:0 20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 8px 24px #19304d12}
 h1,h2,h3{line-height:1.2}h2{margin-top:32px;color:#173c6d}.step{display:flex;gap:12px;margin:12px 0}.n{flex:0 0 32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;text-align:center;font-weight:700;padding-top:3px}
-code{background:#e9eef6;padding:2px 5px;border-radius:5px}.shot{border:2px dashed #a9b7ca;background:#f8fafc;color:var(--muted);padding:18px;border-radius:10px;margin:10px 0}
-a{color:#1766bd}footer{color:var(--muted);padding:30px 0}.note{border-left:5px solid #f1a340;background:#fff7e8;padding:14px 16px;border-radius:8px}
+code{background:#e9eef6;padding:2px 5px;border-radius:5px}.shot{width:100%;border-radius:12px;border:1px solid var(--line);box-shadow:0 8px 24px #19304d18}
+a{color:#1766bd}.note{border-left:5px solid #f1a340;background:#fff7e8;padding:14px 16px;border-radius:8px}
 </style>
 </head>
 <body>
-<header><div class="hero"><img src="../app/assets/icon.png" alt="EmotionCam smiling camera-lens icon"><div><h1>Start the EmotionCam Demo Here</h1><p class="tag">Offline presenter guide for EmotionCam 1.0.0</p><p>Visible-expression estimates, local processing, personalized calibration, and no cloud calls.</p></div></div></header>
+<header><div class="hero"><img src="../app/assets/icon.png" alt="EmotionCam icon"><div><h1>Start the EmotionCam Demo Here</h1><p class="tag">Offline presenter guide for EmotionCam 1.0.0</p><p>Visible-expression estimates, local processing, personalized calibration, Statistics, and privacy-first defaults.</p></div></div></header>
 <main class="wrap">
-<div class="note"><strong>Before the room fills:</strong> close other webcam apps, allow Windows camera access, use steady lighting, and open EmotionCam. In the app, this page opens from <strong>Help &gt; Start Demo Guide</strong>.</div>
+<div class="note"><strong>Before presenting:</strong> close other webcam apps, allow Windows camera access, use steady lighting, and keep raw calibration image storage off.</div>
 <h2>Quick Start</h2>
 <div class="grid">
-<section class="card"><h3>1. Open and explain privacy</h3><p>Show the simplified lens icon, startup privacy notice, and optional metadata-history checkbox.</p></section>
-<section class="card"><h3>2. Show live detection</h3><p>Click <strong>Start Camera</strong>, hold neutral, then smile. Point out the smoothed label and blue positive-group rectangle.</p></section>
-<section class="card"><h3>3. Show controls and themes</h3><p>Open Settings, click the visible spinner arrows, type a value, then switch Dark to Light and save.</p></section>
-<section class="card"><h3>4. Show calibration</h3><p>Use the expression dropdown, local example graphic, match helper, Start Capture, Re-capture, Previous, Next, and Finish.</p></section>
+<section class="card"><h3>1. Open EmotionCam</h3><p>Show the final icon, startup privacy copy, and metadata-history choice.</p></section>
+<section class="card"><h3>2. Start the camera</h3><p>Show visible-expression estimates. Explain that screenshots here use a demo avatar rather than real webcam frames.</p></section>
+<section class="card"><h3>3. Show Settings</h3><p>Demonstrate visible spinner arrows and switch from Dark to Light theme.</p></section>
+<section class="card"><h3>4. Show Calibration and Statistics</h3><p>Use dropdown calibration, local example graphics, match helper, then show local Statistics charts.</p></section>
 </div>
-<h2>Complete Demo Checklist</h2>
-<div class="card">
-<div class="step"><span class="n">1</span><div>Launch EmotionCam and show the app icon and startup screen.</div></div>
-<div class="step"><span class="n">2</span><div>Click <strong>Start Camera</strong>; show neutral and positive visible-expression estimates.</div></div>
-<div class="step"><span class="n">3</span><div>Click <strong>Stop Camera</strong>; show the black <code>Camera stopped</code> preview.</div></div>
-<div class="step"><span class="n">4</span><div>Open Settings; demonstrate typing and the visible numeric up/down arrows.</div></div>
-<div class="step"><span class="n">5</span><div>Choose <strong>Theme: Light</strong>, save, and optionally switch back to Dark.</div></div>
-<div class="step"><span class="n">6</span><div>Open calibration and choose a target from the dropdown.</div></div>
-<div class="step"><span class="n">7</span><div>Show the local example graphic and permissive match helper.</div></div>
-<div class="step"><span class="n">8</span><div>Click Start Capture; show progress, valid/rejected samples, and quality.</div></div>
-<div class="step"><span class="n">9</span><div>Use Re-capture, Previous, and Next. Explain that Skip and the separate unknown-label flow were removed.</div></div>
-<div class="step"><span class="n">10</span><div>Finish calibration; show Hybrid mode and personalized profile status.</div></div>
-<div class="step"><span class="n">11</span><div>Run in background; explain local processing and cooldown-controlled popups.</div></div>
-<div class="step"><span class="n">12</span><div>Open Statistics; show selected-day and last-7-days local charts.</div></div>
-<div class="step"><span class="n">13</span><div>Show optional User Profile and Daily Email Summary settings. Explain email is off by default and sends text only.</div></div>
-<div class="step"><span class="n">14</span><div>Open metadata-only logs, then Exit fully.</div></div>
-</div>
-<h2>Screenshot References</h2>
+<h2>Demo Flow</h2>
+<section class="card">
+<div class="step"><span class="n">1</span><div>Launch EmotionCam and show the startup screen.</div></div>
+<div class="step"><span class="n">2</span><div>Click <strong>Start Camera</strong>; explain local visible-expression estimates.</div></div>
+<div class="step"><span class="n">3</span><div>Smile and point out the blue positive-group rectangle.</div></div>
+<div class="step"><span class="n">4</span><div>Click <strong>Stop Camera</strong>; show <code>Camera stopped</code>.</div></div>
+<div class="step"><span class="n">5</span><div>Open Settings; click spinner arrows and switch Dark/Light theme.</div></div>
+<div class="step"><span class="n">6</span><div>Open calibration; use dropdown, example graphic, match helper, Start Capture, Re-capture, Previous, Next, and Finish.</div></div>
+<div class="step"><span class="n">7</span><div>Open Statistics; show today balance, weekly balance, and label counts.</div></div>
+<div class="step"><span class="n">8</span><div>Show optional user profile and disabled-by-default text-only email summaries.</div></div>
+<div class="step"><span class="n">9</span><div>Run in background, explain tray behavior, open logs, and exit.</div></div>
+</section>
+<h2>Key Screens</h2>
 <div class="grid">
-<div class="shot">Placeholder: <code>screenshots/02_main_dashboard_dark_theme.png</code></div>
-<div class="shot">Placeholder: <code>screenshots/03_main_dashboard_light_theme.png</code></div>
-<div class="shot">Placeholder: <code>screenshots/04_settings_numeric_arrows_dark.png</code></div>
-<div class="shot">Placeholder: <code>screenshots/09_calibration_match_checkmark.png</code></div>
-<div class="shot">Placeholder: <code>screenshots/16_statistics_overview.png</code></div>
-<div class="shot">Placeholder: <code>screenshots/17_user_profile_email_settings.png</code></div>
+<img class="shot" src="screenshots/01_startup_screen.png" alt="Startup screen">
+<img class="shot" src="screenshots/02_main_dashboard_dark_theme.png" alt="Dark dashboard">
+<img class="shot" src="screenshots/07_settings_numeric_arrows.png" alt="Numeric arrows">
+<img class="shot" src="screenshots/09_calibration_overview.png" alt="Calibration">
+<img class="shot" src="screenshots/13_statistics_overview.png" alt="Statistics">
+<img class="shot" src="screenshots/19_background_mode_tray.png" alt="Background mode">
 </div>
 <h2>Presenter Materials</h2>
-<section class="card"><p><a href="demo_script.md">Detailed presenter script</a> · <a href="user_manual.html">Human-readable user manual</a> · <a href="screenshot_checklist.md">Screenshot checklist</a></p></section>
-<h2>Demo-Day Troubleshooting</h2>
-<section class="card"><ul><li>Camera unavailable: close Camera/Teams/Zoom/browser calls and verify permissions.</li><li>No face or poor calibration quality: improve lighting, face the camera, and hold still.</li><li>No tray: EmotionCam minimizes to the taskbar as a fallback.</li><li>Old arrows/theme: close any old packaged build and start the newly built application.</li><li>Do not force a negative expression for popups; explain their stable-group cooldown behavior.</li></ul></section>
-<footer>EmotionCam processes visible-expression estimates locally. It does not know true emotions.</footer>
+<section class="card"><p><a href="demo_script.md">Detailed presenter script</a> · <a href="user_manual.html">User manual</a> · <a href="screenshot_checklist.md">Screenshot checklist</a></p></section>
+<h2>Troubleshooting</h2>
+<section class="card"><ul><li>Camera unavailable: close Camera/Teams/Zoom/browser calls and verify Windows camera permissions.</li><li>No face or poor calibration quality: improve lighting and hold still.</li><li>No tray: EmotionCam minimizes to the taskbar as a fallback.</li><li>Do not force negative expressions for a popup demo; explain cooldown behavior instead.</li></ul></section>
 </main>
 </body></html>

@@ -1,49 +1,106 @@
 # EmotionCam
 
-EmotionCam is a Windows-only, local-only Python desktop application that shows
-approximate visible facial-expression estimates from one person using the
-built-in laptop webcam.
+![EmotionCam icon](app/assets/icon.png)
 
-EmotionCam does **not** know true emotions or diagnose mood or mental state. It
-does not identify people, perform face matching, make medical or psychological claims, or support
-lie detection, security, hiring, or surveillance use cases.
+EmotionCam is a Windows desktop app that estimates visible facial expressions
+from a local webcam feed. It is designed for one person using a built-in laptop
+webcam and presents smoothed, approximate expression estimates such as neutral,
+smile, focused, surprised, tired, or unknown.
 
-> EmotionCam processes webcam frames locally. It stores only expression metadata
-> and optional personalized calibration features locally. It does not identify
-> people or upload data. Raw calibration debug images are off by default.
+EmotionCam estimates **visible expressions**, not guaranteed true emotions. It
+does not diagnose mood or mental state and is not for medical, psychological,
+legal, hiring, security, surveillance, or lie-detection decisions.
+
+![EmotionCam dashboard](docs/screenshots/02_main_dashboard_dark_theme.png)
 
 ## Features
 
-- Modern dark/light PySide6 dashboard with live OpenCV webcam preview
-- Visible, clickable numeric spinner arrows in both themes
-- MediaPipe Face Landmarker detection with normalized landmarks and blendshapes,
-  plus an OpenCV frontal/profile fallback
-- Approximate categories: neutral, happy, smile, laughing, sad, angry, surprised,
-  fearful, disgusted, confused, focused, tired, unknown, low confidence, and no face
-- Brief face-missing grace tracking to avoid instant no-face flicker
-- Smoothed positive blue, negative orange, and neutral gray face rectangles
-- Safe, cooldown-controlled interaction messages
-- Optional metadata-only JSONL history, enabled by default with first-start choice
-- Local settings, clear logs, open logs folder, and graceful camera errors
-- Optional system-tray background mode with cooldown-controlled safe notifications
-- Personalized local expression calibration with heuristic, personalized, and hybrid modes
-- Local Statistics window with selected-day and last-7-days expression summaries
-- Optional local user name/email profile and opt-in daily summary email
-- No cloud APIs, network requests, telemetry, or accounts; no saved camera frames by default
+- Modern PySide6 dashboard with dark and light themes
+- Visible, clickable numeric spinner arrows in Settings
+- Local webcam processing with MediaPipe Face Landmarker and OpenCV fallback
+- Conservative heuristic, personalized, and hybrid expression classifiers
+- Personalized calibration using local landmark/blendshape feature vectors
+- Blue/orange/gray smoothed face rectangle groups
+- Background tray mode with safe cooldown-controlled notifications
+- Metadata-only local JSONL logs
+- Local Statistics module with daily and weekly charts
+- Optional local user profile name/email
+- Optional daily summary email, disabled by default and text-only
+- Offline demo guide and user manual
+- PyInstaller and Inno Setup build support
 
-## Accuracy note
+## Download and install EmotionCam
 
-MediaPipe landmarks and blendshape scores improve tilted-face and smile handling,
-while OpenCV remains a conservative fallback. Visible expression estimates are
-still approximate and can be wrong, especially with poor lighting, unusual angles,
-partial faces, or facial differences. `unknown` and `low confidence` are expected.
+Installer binaries are GitHub Releases artifacts. They are **not** committed into this
+repository because generated `.exe` files are large binary files.
 
-## Install for development
+1. Go to
+   [github.com/silviu-cristian/EmotionCam/releases](https://github.com/silviu-cristian/EmotionCam/releases).
+2. Download `EmotionCam_Setup.exe` from the latest release.
+3. Run the installer.
+4. Launch EmotionCam from the Start Menu or optional desktop shortcut.
+5. Allow Windows camera access for desktop apps if prompted.
 
-Requirements: Windows 10/11 and Python 3.11 or 3.12, 64-bit recommended.
+SmartScreen note: the installer is unsigned, so Windows may display a warning.
+Choose **More info > Run anyway** only if you trust the downloaded file.
+
+EmotionCam installs per user under:
+
+```text
+%LOCALAPPDATA%\Programs\EmotionCam
+```
+
+Uninstall from **Windows Settings > Apps > Installed apps > EmotionCam**.
+
+## How to start the demo
+
+1. Install EmotionCam or run it from source.
+2. Open EmotionCam.
+3. Select **Help > Start Demo Guide**.
+4. Follow the local offline guide:
+   [docs/START_DEMO_HERE.html](docs/START_DEMO_HERE.html).
+
+The demo uses camera-free documentation screenshots with a generated avatar so
+the public documentation does not expose a real webcam feed.
+
+## Privacy design
+
+> EmotionCam processes webcam frames locally. It stores only expression metadata
+> and optional personalized calibration features locally. It does not identify
+> people or upload webcam images.
+
+Default behavior:
+
+- No cloud analysis
+- No telemetry or analytics
+- No account system
+- No identity recognition or face matching
+- No automatic screenshots or video recording
+- No saved webcam images or face images
+
+Optional features:
+
+- Metadata history logs can be disabled.
+- Raw calibration images are saved only if the explicit debugging setting is
+  enabled.
+- Daily email summaries are off by default. If enabled, they use the network to
+  send summary text only. They never include webcam frames or images.
+
+## Local data paths
+
+| Data | Path |
+|---|---|
+| Settings | `%LOCALAPPDATA%\EmotionCam\config.json` |
+| Metadata logs | `%LOCALAPPDATA%\EmotionCam\logs\expression_history.jsonl` |
+| Personalized expression profile | `%LOCALAPPDATA%\EmotionCam\profile\expression_profile.json` |
+| User profile and email preferences | `%LOCALAPPDATA%\EmotionCam\profile\user_profile.json` |
+| Optional debug calibration images | `%LOCALAPPDATA%\EmotionCam\profile\debug_images\` |
+
+## Run from source
+
+Requirements: Windows 10/11 and Python 3.11 or 3.12.
 
 ```powershell
-cd emotioncam
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
@@ -51,156 +108,77 @@ python -m pip install -r requirements.txt
 python -m app.main
 ```
 
-Windows may ask for camera permission. Enable camera access for desktop apps in
-Windows Settings if the camera cannot be opened. Close other camera applications
-if the webcam is already in use.
+Close other webcam apps if the camera cannot be opened.
 
-## Local data
-
-Configuration:
-
-```text
-%LOCALAPPDATA%\EmotionCam\config.json
-```
-
-Optional metadata history:
-
-```text
-%LOCALAPPDATA%\EmotionCam\logs\expression_history.jsonl
-```
-
-History lines contain only timestamps, visible expression labels/groups,
-confidence, face-detected status, displayed message text, popup status, and FPS.
-Images, video frames, face images, biometric templates, and identity data are
-not written by default. The optional **Store raw calibration images for debugging**
-setting is off by default and is the only feature that can save calibration frames.
-
-## Personalized expression calibration
-
-Personalized calibration can improve visible-expression estimates by learning
-normalized facial-movement feature vectors from your own prompted expressions.
-It does not learn identity and does not claim to know true emotions.
-
-Open **Settings > Train / Calibrate Expressions** or press **Improve detection
-with calibration** on the dashboard. The unified calibration screen includes a
-target-expression dropdown, Previous/Next navigation, a bundled local example
-graphic, live visible-expression estimate, and a permissive helper match
-indicator. Each target waits until you manually click **Start Capture**.
-
-After capture, review valid/rejected counts and quality. Re-capture replaces the
-captured batch instead of silently mixing it. Frames with no clear face, poor
-landmarks, blur, poor lighting, or excessive rotation are rejected. Example
-graphics are rendered from local assets and never fetched from the internet.
-
-By default, calibration stores only normalized landmark/blendshape feature
-vectors and labels at:
-
-```text
-%LOCALAPPDATA%\EmotionCam\profile\expression_profile.json
-```
-
-After training, EmotionCam switches to **Hybrid recommended** mode. Hybrid mode
-uses the personalized profile when confidence is sufficient and falls back to
-the conservative heuristic classifier otherwise. Personalized classification
-also works while EmotionCam runs in background mode.
-
-Profile controls in Settings can add samples, retrain, delete, export, or import
-the profile using local files only. Deleting the profile removes local training
-data and returns detection to heuristic mode.
-
-Calibration stores local expression feature data and labels. EmotionCam does not
-save camera images unless debug image storage is explicitly enabled.
-
-The future external AI agent backend is an interface-only placeholder. It is
-disabled and cannot send frames or make network requests. Enabling such a
-backend in the future would require explicit user consent to send images outside
-the app.
-
-## Background mode
-
-Press **Run in background** to keep camera analysis and optional metadata logging
-active locally while hiding EmotionCam in the Windows system tray. The tray menu
-can show the app, stop the camera, or exit. Optional notifications use only stable
-smoothed visible-expression groups and configurable cooldowns. No data is uploaded.
-
-## Statistics and optional daily email
-
-Press **Statistics** on the dashboard to view local-only balance, timeline,
-label-count, and last-7-days charts derived from metadata history. Corrupted or
-old log lines are skipped safely.
-
-Optional user name and email fields are stored at:
-
-```text
-%LOCALAPPDATA%\EmotionCam\profile\user_profile.json
-```
-
-Daily email summaries are off by default. Enabling SMTP uses the network to send
-summary text only; no frames or images are sent. SMTP passwords are stored with
-the system credential store when `keyring` is available and are never written
-to the JSON profile. The default-mail-client option opens a draft and never
-sends automatically.
-
-The official `app\assets\icon.png` is used in the application, documentation,
-taskbar, and tray. The generated `icon.ico` contains 16, 32, 48, 64, 128, and
-256 pixel Windows icon sizes and is used by PyInstaller and Inno Setup.
-
-## How to start the demo
-
-1. Install EmotionCam or run `python -m app.main`.
-2. Open EmotionCam.
-3. Select **Help > Start Demo Guide**.
-4. Follow the offline `docs\START_DEMO_HERE.html` guide.
-
-The demo guide covers the app icon, dark/light theme switch, visible numeric
-spinner arrows, current unified calibration flow, background mode, and logs.
-
-## Test
-
-```powershell
-python -m pytest
-```
-
-## Build the Windows app
-
-Install requirements, then run:
+## Build the app
 
 ```powershell
 python build_exe.py
 ```
 
-The unpackaged app folder is created at `dist\EmotionCam\`. Test
-`dist\EmotionCam\EmotionCam.exe` before building the installer.
+The packaged app folder is created at:
+
+```text
+release\app\EmotionCam\
+```
+
+Test `release\app\EmotionCam\EmotionCam.exe` before building the installer.
 
 ## Build the installer
 
-Install [Inno Setup 6](https://jrsoftware.org/isinfo.php), build the app first,
-then compile `installer\emotioncam.iss` in Inno Setup. The installer is written
-to `installer\output\`.
+Install Inno Setup 6, then run:
 
-The per-user installer needs no administrator access and installs under
-`%LOCALAPPDATA%\Programs\EmotionCam`.
+```powershell
+& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\emotioncam.iss
+```
+
+The installer is generated at:
+
+```text
+release\EmotionCam_Setup.exe
+```
+
+Do not commit the installer. Attach it to a GitHub Release.
+
+## Regenerate documentation screenshots
+
+```powershell
+python docs\capture_docs_screenshots.py
+python docs\generate_manual_formats.py
+python docs\generate_manual_pdf.py
+```
+
+Screenshots are generated from local assets and a safe demo avatar, not a real
+webcam feed.
+
+## Test
+
+```powershell
+python -m pytest
+python -m compileall -q app
+```
 
 ## Architecture
 
-- `app/core/camera_worker.py`: background capture and analysis thread
-- `app/core/face_detector.py`: local single-face detector
-- `app/core/expression_classifier.py`: lightweight local approximation heuristic
-- `app/core/expression_backends.py`: heuristic, personalized, hybrid, and disabled external interfaces
-- `app/core/expression_features.py`: normalized calibration features and quality checks
-- `app/core/expression_profile.py`: local profile persistence and management
-- `app/core/smoothing.py`: temporal stabilization and expression grouping
-- `app/core/interaction_engine.py`: safe message cooldown logic
-- `app/core/config.py`: local JSON settings
-- `app/core/logger.py`: metadata-only JSONL history
-- `app/ui/`: startup screen, dashboard, settings, camera view, and timeline
+- `app/main.py`: Qt application startup and icon/theme setup
+- `app/ui/main_window.py`: dashboard, tray, settings, calibration, statistics
+- `app/ui/settings_dialog.py`: settings, profile, email summary, calibration controls
+- `app/ui/calibration_dialog.py`: guided local calibration flow
+- `app/ui/statistics_window.py`: local metadata charts
+- `app/core/camera_worker.py`: threaded webcam capture and analysis
+- `app/core/face_detector.py`: MediaPipe/OpenCV local face detection
+- `app/core/expression_backends.py`: heuristic, personalized, hybrid, disabled external interface
+- `app/core/expression_features.py`: normalized expression feature extraction
+- `app/core/statistics.py`: resilient log parsing and summaries
+- `app/core/user_profile.py`: local optional name/email profile
+- `app/core/email_summary.py`: optional text-only email summaries
+- `installer/emotioncam.iss`: Inno Setup installer recipe
 
-## Privacy design
+## Limitations
 
-The default application flow makes no network requests. The only implemented
-network feature is the explicitly enabled SMTP daily text summary; it never
-includes webcam frames or images. Webcam frames exist only in memory while
-processing and displaying the live preview. Stopping or closing the camera
-discards them. Logging can be disabled before the camera starts or at any time
-in Settings. Raw calibration frame storage requires an explicit opt-in setting
-and remains local.
+- Expression estimates are approximate and can be wrong.
+- Lighting, blur, occlusion, distance, and head angle affect results.
+- Personalized calibration helps but does not guarantee accuracy.
+- The app is designed for one visible user and one local webcam.
+- SMTP email summaries require user-supplied provider settings and network
+  access.

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "emotioncam"
 version = "1.0.0"
-description = "Local-only approximate facial-expression desktop app for Windows"
+description = "Privacy-first Windows desktop app for local visible-expression estimates"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [
