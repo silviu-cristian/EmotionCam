@@ -228,10 +228,16 @@ class SettingsDialog(QDialog):
         full_frame_warning.setWordWrap(True)
         full_frame_warning.setObjectName("subtitle")
         ai_layout.addWidget(full_frame_warning)
-        test_ai = QPushButton("Test Connection")
-        test_ai.clicked.connect(lambda: self.test_ai_requested.emit(self.ai_values()))
-        ai_layout.addWidget(test_ai)
+        self.test_ai_button = QPushButton("Test Connection")
+        self.test_ai_button.clicked.connect(self._request_ai_test)
+        ai_layout.addWidget(self.test_ai_button)
+        self.ai_test_status = QLabel("Connection not tested yet.")
+        self.ai_test_status.setWordWrap(True)
+        self.ai_test_status.setObjectName("subtitle")
+        ai_layout.addWidget(self.ai_test_status)
         content_layout.addWidget(ai_group)
+        self.external_ai_enabled.toggled.connect(self._sync_external_ai_mode)
+        self.detection_mode.currentIndexChanged.connect(self._sync_external_ai_checkbox)
 
         personalized = QGroupBox("Personalized expression calibration")
         personalized_layout = QVBoxLayout(personalized)
@@ -345,6 +351,60 @@ class SettingsDialog(QDialog):
         box.setFocusPolicy(Qt.StrongFocus)
         box.setMinimumWidth(150)
         box.setMaximumWidth(190)
+
+    def _set_detection_mode(self, mode: str) -> None:
+        index = self.detection_mode.findData(mode)
+        if index < 0:
+            return
+        was_blocked = self.detection_mode.blockSignals(True)
+        self.detection_mode.setCurrentIndex(index)
+        self.detection_mode.blockSignals(was_blocked)
+
+    def _set_external_ai_enabled(self, enabled: bool) -> None:
+        was_blocked = self.external_ai_enabled.blockSignals(True)
+        self.external_ai_enabled.setChecked(enabled)
+        self.external_ai_enabled.blockSignals(was_blocked)
+
+    def _sync_external_ai_mode(self, enabled: bool) -> None:
+        mode = self.detection_mode.currentData()
+        if enabled and mode not in {"external_ai", "hybrid_ai"}:
+            self._set_detection_mode("hybrid_ai")
+        elif not enabled and mode == "hybrid_ai":
+            self._set_detection_mode("hybrid")
+        elif not enabled and mode == "external_ai":
+            self._set_detection_mode("heuristic")
+
+    def _sync_external_ai_checkbox(self) -> None:
+        mode = self.detection_mode.currentData()
+        if mode in {"external_ai", "hybrid_ai"}:
+            self._set_external_ai_enabled(True)
+        elif self.external_ai_enabled.isChecked():
+            self._set_external_ai_enabled(False)
+
+    def _request_ai_test(self) -> None:
+        self.set_ai_test_running()
+        self.test_ai_requested.emit(self.ai_values())
+
+    def set_ai_test_running(self) -> None:
+        self.test_ai_button.setEnabled(False)
+        self.test_ai_button.setText("Testing...")
+        self.ai_test_status.setText("Testing OpenAI connection. This can take a few seconds.")
+
+    def set_ai_test_result(self, success: bool, message: str, show_popup: bool = True) -> None:
+        clean_message = " ".join(str(message or "").split())
+        if len(clean_message) > 600:
+            clean_message = clean_message[:597] + "..."
+        prefix = "Connection succeeded" if success else "Connection failed"
+        text = f"{prefix}: {clean_message}"
+        self.ai_test_status.setText(text)
+        self.test_ai_button.setEnabled(True)
+        self.test_ai_button.setText("Test Connection")
+        if not show_popup:
+            return
+        if success:
+            QMessageBox.information(self, "External AI Connection", text)
+        else:
+            QMessageBox.warning(self, "External AI Connection", text)
 
     def _load(self, data: dict) -> None:
         theme_index = self.theme.findData(data.get("theme", "dark"))

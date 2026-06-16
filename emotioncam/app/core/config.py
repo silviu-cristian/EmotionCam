@@ -87,6 +87,12 @@ class ConfigManager:
             self.data["expression_detection_mode"] = "hybrid"
         if "external_ai_enabled" not in loaded_keys and "external_ai_backend_enabled" in loaded_keys:
             self.data["external_ai_enabled"] = bool(self.data["external_ai_backend_enabled"])
+        if (
+            self.data.get("external_ai_enabled")
+            and self.data.get("external_ai_consent_accepted")
+            and self.data.get("expression_detection_mode") == "hybrid"
+        ):
+            self.data["expression_detection_mode"] = "hybrid_ai"
         return deepcopy(self.data)
 
     def save(self) -> None:

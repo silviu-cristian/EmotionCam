@@ -49,7 +49,7 @@ def test_release_docs_use_current_screenshots_and_releases():
         assert old_name not in demo
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "GitHub Releases" in readme
-    assert "EmotionCam_Setup_v1.1.0_AI.exe" in readme
+    assert "EmotionCam_Setup_v1.1.3_AI.exe" in readme
 
 
 def test_docs_do_not_contain_real_api_keys():

@@ -26,6 +26,67 @@ RECTANGLE_COLORS = {
 }
 
 
+def camera_indexes_to_try(configured_index: int, max_index: int = 3) -> list[int]:
+    """Return configured camera index first, then nearby fallback indexes."""
+    indexes = [int(configured_index)]
+    indexes.extend(range(max_index + 1))
+    return list(dict.fromkeys(index for index in indexes if index >= 0))
+
+
+def camera_backends(cv2_module: Any) -> list[tuple[str, int]]:
+    """Return Windows-friendly OpenCV camera backends in fallback order."""
+    candidates = [
+        ("DirectShow", getattr(cv2_module, "CAP_DSHOW", 700)),
+        ("Media Foundation", getattr(cv2_module, "CAP_MSMF", 1400)),
+        ("OpenCV automatic", getattr(cv2_module, "CAP_ANY", 0)),
+    ]
+    return list(dict.fromkeys(candidates))
+
+
+def _open_capture_candidate(cv2_module: Any, index: int, backend_name: str, backend_id: int):
+    capture = cv2_module.VideoCapture(index, backend_id)
+    if not capture or not capture.isOpened():
+        if capture:
+            capture.release()
+        return None, "not_opened"
+    capture.set(cv2_module.CAP_PROP_FRAME_WIDTH, 960)
+    capture.set(cv2_module.CAP_PROP_FRAME_HEIGHT, 540)
+    for _ in range(5):
+        ok, frame = capture.read()
+        if ok and frame is not None:
+            return capture, "ok"
+    capture.release()
+    return None, "opened_but_no_frames"
+
+
+def open_camera_capture(cv2_module: Any, configured_index: int):
+    """Open a camera capture using several Windows backend fallbacks."""
+    attempts: list[str] = []
+    for index in camera_indexes_to_try(configured_index):
+        for backend_name, backend_id in camera_backends(cv2_module):
+            try:
+                capture, status = _open_capture_candidate(cv2_module, index, backend_name, backend_id)
+            except Exception as exc:
+                attempts.append(f"index {index} via {backend_name}: {type(exc).__name__}")
+                continue
+            attempts.append(f"index {index} via {backend_name}: {status}")
+            if capture is not None:
+                return capture, index, backend_name, attempts
+    return None, None, "", attempts
+
+
+def camera_unavailable_message(attempts: list[str]) -> str:
+    detail = "; ".join(attempts[-6:]) if attempts else "no camera backends were attempted"
+    return (
+        "Could not open the built-in webcam after trying multiple Windows camera backends.\n\n"
+        "Please close apps that may be using the camera, such as Camera, Teams, Zoom, "
+        "a browser, or another EmotionCam window. Also check Windows Settings > Privacy "
+        "& security > Camera and make sure camera access and desktop app access are enabled. "
+        "If antivirus privacy protection is installed, allow EmotionCam to use the camera.\n\n"
+        f"Attempt details: {detail}"
+    )
+
+
 class CameraWorker(QThread):
     frame_ready = Signal(QImage)
     result_ready = Signal(dict)
@@ -52,15 +113,12 @@ class CameraWorker(QThread):
             self.camera_error.emit("OpenCV is unavailable. Reinstall EmotionCam.")
             return
 
-        capture = cv2.VideoCapture(int(self.settings["camera_index"]), cv2.CAP_DSHOW)
-        if not capture.isOpened():
-            self.camera_error.emit(
-                "Could not open the built-in webcam. It may be unavailable, blocked, "
-                "or already in use by another application."
-            )
+        self.status_changed.emit("Opening camera...")
+        capture, camera_index, backend_name, attempts = open_camera_capture(cv2, int(self.settings["camera_index"]))
+        if capture is None:
+            self.camera_error.emit(camera_unavailable_message(attempts))
             return
-        capture.set(cv2.CAP_PROP_FRAME_WIDTH, 960)
-        capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 540)
+        self.status_changed.emit(f"Camera opened on index {camera_index} using {backend_name}")
 
         try:
             detector = FaceDetector(

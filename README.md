@@ -4,7 +4,7 @@
 
 EmotionCam is a Windows desktop app that estimates visible facial expressions
 from a webcam feed. It is built with Python, PySide6, OpenCV, and MediaPipe, and
-it is designed for one person using a built-in laptop webcam. Version 1.1.0 adds
+it is designed for one person using a built-in laptop webcam. Version 1.1.3 adds
 optional external AI analysis, but the app remains local-first and AI is off
 until the user enables it, accepts the warning, and provides an API key.
 
@@ -43,7 +43,7 @@ Uninstall it from **Windows Settings > Apps > Installed apps > EmotionCam**.
 - Best for privacy-focused or offline use.
 - Installer asset: `EmotionCam_Setup.exe`.
 
-### v1.1.0-ai - AI-enabled release
+### v1.1.3-ai - Recommended AI-enabled release
 
 - Keeps all local detection features.
 - Adds optional **External AI Analysis** using OpenAI vision through the
@@ -54,14 +54,33 @@ Uninstall it from **Windows Settings > Apps > Installed apps > EmotionCam**.
   user changes that setting.
 - Falls back to local detection when no key, no consent, no face, timeout, or
   API error occurs.
-- Installer asset: `EmotionCam_Setup_v1.1.0_AI.exe`.
+- Includes the camera-opening hotfix for Windows webcam backend fallback.
+- Includes clear Settings-dialog feedback for the External AI Test Connection
+  button.
+- Installer asset: `EmotionCam_Setup_v1.1.3_AI.exe`.
+
+### v1.1.2-ai - Earlier AI-enabled hotfix
+
+- Added Windows webcam backend fallback for camera startup.
+- Installer asset: `EmotionCam_Setup_v1.1.2_AI.exe`.
+
+### v1.1.1-ai - Earlier AI-enabled hotfix
+
+- Includes the AI-mode activation hotfix so enabling External AI selects
+  Hybrid local + AI mode automatically.
+- Installer asset: `EmotionCam_Setup_v1.1.1_AI.exe`.
+
+### v1.1.0-ai - Earlier AI-enabled release
+
+- First AI-enabled release.
+- Kept available for history, but `v1.1.2-ai` is recommended.
 
 ## Which version should I download?
 
 Choose **v1.0.0 Local-only** if privacy/offline use matters most and you do not
 want any external AI option in the app.
 
-Choose **v1.1.0-ai AI-enabled** if you want the same local app plus optional
+Choose **v1.1.3-ai AI-enabled** if you want the same local app plus optional
 stronger AI-assisted visible-expression analysis, and you accept the privacy
 tradeoff when External AI is explicitly enabled.
 
@@ -119,7 +138,7 @@ The packaged app folder is generated at `emotioncam\release\app\EmotionCam`.
 The AI-enabled installer is generated at:
 
 ```text
-emotioncam\release\EmotionCam_Setup_v1.1.0_AI.exe
+emotioncam\release\EmotionCam_Setup_v1.1.3_AI.exe
 ```
 
 Do not commit the generated installer. Attach it to a GitHub Release instead.
